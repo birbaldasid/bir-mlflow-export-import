@@ -31,19 +31,19 @@ output_dir = output_dir.replace("dbfs:","/dbfs")
 
 stages = dbutils.widgets.get("stages")
 
-export_latest_versions = dbutils.widgets.get("export_latest_versions") == "yes"
+export_latest_versions = dbutils.widgets.get("export_latest_versions") == "true"
 
 run_start_date = dbutils.widgets.get("run_start_date")
 
-export_permissions = dbutils.widgets.get("export_permissions") == "yes"
+export_permissions = dbutils.widgets.get("export_permissions") == "true"
 
-export_deleted_runs = dbutils.widgets.get("export_deleted_runs") == "yes"
+export_deleted_runs = dbutils.widgets.get("export_deleted_runs") == "true"
 
-export_version_model = dbutils.widgets.get("export_version_model") == "yes"
+export_version_model = dbutils.widgets.get("export_version_model") == "true"
 
 notebook_formats = dbutils.widgets.get("notebook_formats").split(",")
 
-use_threads = dbutils.widgets.get("use_threads") == "yes"
+use_threads = dbutils.widgets.get("use_threads") == "true"
 
 task_index = int(dbutils.widgets.get("task_index"))
 

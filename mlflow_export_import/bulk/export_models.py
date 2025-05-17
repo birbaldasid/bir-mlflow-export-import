@@ -146,7 +146,7 @@ def _export_models(
     ok_models = [] ; failed_models = []
     for future in futures:
         result = future.result()
-        if result[0]: ok_models.append(result[1])
+        if result[0]: ok_models.append(result[1]) 
         else: failed_models.append(result[1])
     duration = round(time.time()-start_time, 1)
 
