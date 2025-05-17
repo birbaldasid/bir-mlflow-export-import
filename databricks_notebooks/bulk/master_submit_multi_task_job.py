@@ -96,7 +96,7 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
         tasks.append(task)
 
     job_json = {
-        "name": "Export_All_job",
+        "name": "Export_All_Models",
         "tasks": tasks,
         "format": "MULTI_TASK"
     }
