@@ -37,7 +37,7 @@ def get_experiments_name_of_models(client, model_names):
     model_names = bulk_utils.get_model_names(client, model_names)
     experiment_name_list = []
     for model_name in model_names:
-        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")
+        versions = SearchModelVersionsIterator(client, filter=f""" name="{model_name}" """)
         for vr in versions:
             try:
                 run = client.get_run(vr.run_id)
