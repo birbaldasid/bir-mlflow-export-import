@@ -112,7 +112,9 @@ time.sleep(10)
 
 # COMMAND ----------
 
-dbfs_log_path = f"{output_dir}/export_all.log"
+dbfs_log_path = f"{output_dir}/export_all_{task_index}.log"
+if dbfs_log_path.startswith("/Workspace"):
+    dbfs_log_path=dbfs_log_path.replace("/Workspace","file:/Workspace") 
 dbfs_log_path = dbfs_log_path.replace("/dbfs","dbfs:")
 dbfs_log_path
 
