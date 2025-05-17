@@ -20,32 +20,36 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("1. Output directory", "") 
-output_dir = dbutils.widgets.get("1. Output directory")
+from mlflow_export_import.bulk import config
+from datetime import datetime
+import time
+
+# COMMAND ----------
+
+output_dir = dbutils.widgets.get("output_dir")
 output_dir = output_dir.replace("dbfs:","/dbfs")
 
-dbutils.widgets.multiselect("2. Stages", "Production", ["Production","Staging","Archived","None"])
-stages = dbutils.widgets.get("2. Stages")
+stages = dbutils.widgets.get("stages")
 
-dbutils.widgets.dropdown("3. Export latest versions","no",["yes","no"])
-export_latest_versions = dbutils.widgets.get("3. Export latest versions") == "yes"
+export_latest_versions = dbutils.widgets.get("export_latest_versions") == "yes"
 
-dbutils.widgets.text("4. Run start date", "") 
-run_start_date = dbutils.widgets.get("4. Run start date")
+run_start_date = dbutils.widgets.get("run_start_date")
 
-dbutils.widgets.dropdown("5. Export permissions","no",["yes","no"])
-export_permissions = dbutils.widgets.get("5. Export permissions") == "yes"
+export_permissions = dbutils.widgets.get("export_permissions") == "yes"
 
-dbutils.widgets.dropdown("6. Export deleted runs","no",["yes","no"])
-export_deleted_runs = dbutils.widgets.get("6. Export deleted runs") == "yes"
+export_deleted_runs = dbutils.widgets.get("export_deleted_runs") == "yes"
 
-dbutils.widgets.dropdown("7. Export version MLflow model","no",["yes","no"]) # TODO
-export_version_model = dbutils.widgets.get("7. Export version MLflow model") == "yes"
+export_version_model = dbutils.widgets.get("export_version_model") == "yes"
 
-notebook_formats = get_notebook_formats(8)
+notebook_formats = dbutils.widgets.get("notebook_formats").split(",")
 
-dbutils.widgets.dropdown("9. Use threads","no",["yes","no"])
-use_threads = dbutils.widgets.get("9. Use threads") == "yes"
+use_threads = dbutils.widgets.get("use_threads") == "yes"
+
+task_index = int(dbutils.widgets.get("task_index"))
+
+num_tasks = int(dbutils.widgets.get("num_tasks"))
+
+run_timestamp = int(dbutils.widgets.get("run_timestamp"))
  
 if run_start_date=="": run_start_date = None
 
@@ -58,10 +62,27 @@ print("export_deleted_runs:", export_deleted_runs)
 print("export_version_model:", export_version_model)
 print("notebook_formats:", notebook_formats)
 print("use_threads:", use_threads)
+print("task_index:", task_index)
+print("num_tasks:", num_tasks)
+print("run_timestamp:", run_timestamp)
 
 # COMMAND ----------
 
 assert_widget(output_dir, "1. Output directory")
+
+# COMMAND ----------
+
+output_dir = f"{output_dir}/{run_timestamp}/{task_index}"
+output_dir
+
+# COMMAND ----------
+
+log_path=f"/tmp/my.log"
+log_path
+
+# COMMAND ----------
+
+config.log_path=log_path
 
 # COMMAND ----------
 
@@ -76,5 +97,30 @@ export_all(
     export_deleted_runs = export_deleted_runs,
     export_version_model = export_version_model,
     notebook_formats = notebook_formats, 
-    use_threads = use_threads
+    use_threads = use_threads,
+    task_index = task_index,
+    num_tasks = num_tasks
 )
+
+# COMMAND ----------
+
+time.sleep(10)
+
+# COMMAND ----------
+
+# MAGIC %sh cat /tmp/my.log
+
+# COMMAND ----------
+
+dbfs_log_path = f"{output_dir}/export_all.log"
+dbfs_log_path = dbfs_log_path.replace("/dbfs","dbfs:")
+dbfs_log_path
+
+# COMMAND ----------
+
+
+dbutils.fs.cp(f"file:{log_path}", dbfs_log_path)
+
+# COMMAND ----------
+
+print(dbutils.fs.head(dbfs_log_path))

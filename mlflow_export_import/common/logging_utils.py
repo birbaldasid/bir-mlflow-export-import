@@ -1,6 +1,8 @@
 import os
 import yaml
 import logging.config
+from mlflow_export_import.bulk import config
+log_path=config.log_path
 
 _have_loaded_logging_config = False
 
@@ -10,8 +12,8 @@ def get_logger(name):
         return logging.getLogger(name)
 
     config_path = os.environ.get("MLFLOW_EXPORT_IMPORT_LOG_CONFIG_FILE", None)
-    output_path = os.environ.get("MLFLOW_EXPORT_IMPORT_LOG_OUTPUT_FILE", None)
-    log_format = os.environ.get("MLFLOW_EXPORT_IMPORT_LOG_FORMAT", None)
+    output_path = os.environ.get("MLFLOW_EXPORT_IMPORT_LOG_OUTPUT_FILE", log_path)
+    log_format = os.environ.get("MLFLOW_EXPORT_IMPORT_LOG_FORMAT", "%(asctime)s - %(levelname)s - %(message)s")
     #print(f"logging_utils.get_logger: config_path: {config_path}")
     #print(f"logging_utils.get_logger: output_path: {output_path}")
     #print(f"logging_utils.get_logger: log_format: {log_format}")

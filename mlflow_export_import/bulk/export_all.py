@@ -23,6 +23,8 @@ from mlflow_export_import.common import utils, io_utils
 from mlflow_export_import.client.client_utils import create_mlflow_client
 from mlflow_export_import.bulk.export_models import export_models
 from mlflow_export_import.bulk.export_experiments import export_experiments
+from mlflow_export_import.bulk import bulk_utils
+from mlflow_export_import.bulk.model_utils import get_experiments_name_of_models
 
 ALL_STAGES = "Production,Staging,Archived,None"
 
@@ -39,7 +41,9 @@ def export_all(
         export_permissions = False,
         notebook_formats = None,
         use_threads  =  False,
-        mlflow_client = None
+        mlflow_client = None,
+        task_index = None,
+        num_tasks = None
     ):
     mlflow_client = mlflow_client or create_mlflow_client()
     start_time = time.time()
@@ -54,18 +58,35 @@ def export_all(
         export_permissions = export_permissions,
         export_version_model = export_version_model,
         notebook_formats = notebook_formats,
-        use_threads = use_threads
+        use_threads = use_threads,
+        task_index = task_index,
+        num_tasks = num_tasks
+
     )
 
     # Only import those experiments not exported by above export_models()
-    exported_exp_names = res_models["experiments"]["experiment_names"]
+    # exported_exp_names = res_models["experiments"]["experiment_names"]
+    # all_exps = SearchExperimentsIterator(mlflow_client)
+    # all_exp_names = [ exp.name for exp in all_exps ]
+    # remaining_exp_names = list(set(all_exp_names) - set(exported_exp_names))
+
+
     all_exps = SearchExperimentsIterator(mlflow_client)
     all_exp_names = [ exp.name for exp in all_exps ]
-    remaining_exp_names = list(set(all_exp_names) - set(exported_exp_names))
+    _logger.info(f"Total all_exp_names is {len(all_exp_names)}")
+
+    all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
+    _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
+
+    remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
+    _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
+
+    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks)
+    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ")
 
     res_exps = export_experiments(
         mlflow_client = mlflow_client,
-        experiments = remaining_exp_names,
+        experiments = remaining_exp_names_subset,
         output_dir = os.path.join(output_dir,"experiments"),
         export_permissions = export_permissions,
         run_start_time = run_start_time,

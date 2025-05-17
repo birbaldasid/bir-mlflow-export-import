@@ -40,7 +40,9 @@ def export_models(
         export_version_model = False,
         notebook_formats = None,
         use_threads = False,
-        mlflow_client = None
+        mlflow_client = None,
+        task_index = None,
+        num_tasks = None
     ):
     """
     :param: model_names: Can be either:
@@ -55,7 +57,7 @@ def export_models(
             model_names = f.read().splitlines()
 
     mlflow_client = mlflow_client or create_mlflow_client()
-    exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names)
+    exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks)
     exp_ids = exps_and_runs.keys()
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
@@ -79,7 +81,9 @@ def export_models(
         export_latest_versions = export_latest_versions,
         export_version_model = export_version_model,
         export_permissions = export_permissions,
-        export_deleted_runs = export_deleted_runs
+        export_deleted_runs = export_deleted_runs,
+        task_index = task_index, 
+        num_tasks = num_tasks
     )
     duration = round(time.time()-start_time, 1)
     _logger.info(f"Duration for total registered models and versions' runs export: {duration} seconds")
@@ -112,11 +116,13 @@ def _export_models(
         export_latest_versions = False,
         export_version_model = False,
         export_permissions = False,
-        export_deleted_runs = False
+        export_deleted_runs = False,
+        task_index = None, 
+        num_tasks = None
     ):
     max_workers = utils.get_threads(use_threads)
     start_time = time.time()
-    model_names = bulk_utils.get_model_names(mlflow_client, model_names)
+    model_names = bulk_utils.get_model_names(mlflow_client, model_names, task_index, num_tasks)
     _logger.info("Models to export:")
     for model_name in model_names:
         _logger.info(f"  {model_name}")

@@ -7,27 +7,49 @@ from mlflow_export_import.common.iterators import SearchModelVersionsIterator
 _logger = utils.getLogger(__name__)
 
 
-def get_experiments_runs_of_models(client, model_names, show_experiments=False, show_runs=False):
+def get_experiments_runs_of_models(client, model_names, task_index=None, num_tasks=None, show_experiments=False, show_runs=False):
     """ Get experiments and runs to to export. """
-    model_names = bulk_utils.get_model_names(client, model_names)
+    model_names = bulk_utils.get_model_names(client, model_names, task_index, num_tasks)
     _logger.info(f"{len(model_names)} Models:")
     for model_name in model_names:
         _logger.info(f"  {model_name}")
     exps_and_runs = {}
     for model_name in model_names:
-        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")
+        versions = SearchModelVersionsIterator(client, filter=f""" name="{model_name}" """)
         for vr in versions:
             try:
                 run = client.get_run(vr.run_id)
                 exps_and_runs.setdefault(run.info.experiment_id,[]).append(run.info.run_id)
-            except mlflow.exceptions.MlflowException as e:
-                if e.error_code == "RESOURCE_DOES_NOT_EXIST":
-                    _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}' does not exist")
-                else:
-                    _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error.code: {e.error_code}. Error.message: {e.message}")
+            except Exception as e:    
+                _logger.warning(f"Error with run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error: {e}")
+            # except mlflow.exceptions.MlflowException as e:
+            #     if e.error_code == "RESOURCE_DOES_NOT_EXIST":
+            #         _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}' does not exist")
+            #     else:
+            #         _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error.code: {e.error_code}. Error.message: {e.message}")
     if show_experiments:
         show_experiments_runs_of_models(exps_and_runs, show_runs)
     return exps_and_runs
+
+
+def get_experiments_name_of_models(client, model_names):
+    """ Get experiments name to export. """
+    model_names = bulk_utils.get_model_names(client, model_names)
+    experiment_name_list = []
+    for model_name in model_names:
+        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")
+        for vr in versions:
+            try:
+                run = client.get_run(vr.run_id)
+                experiment_id = run.info.experiment_id                
+                experiment = mlflow.get_experiment(experiment_id)
+                experiment_name = experiment.name                
+                experiment_name_list.append(experiment_name)
+            except Exception as e:
+                _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error.message: {e.message}")
+    
+    return experiment_name_list
+
 
 
 def show_experiments_runs_of_models(exps_and_runs, show_runs=False):
