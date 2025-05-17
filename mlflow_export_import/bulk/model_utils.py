@@ -46,7 +46,7 @@ def get_experiments_name_of_models(client, model_names):
                 experiment_name = experiment.name                
                 experiment_name_list.append(experiment_name)
             except Exception as e:
-                _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error.message: {e.message}")
+                _logger.warning(f"run '{vr.run_id}' of version {vr.version} of model '{model_name}': Error: {e}")
     
     return experiment_name_list
 
