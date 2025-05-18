@@ -50,6 +50,7 @@ def export_experiments(
     mlflow_client = mlflow_client or mlflow.MlflowClient()
     start_time = time.time()
     max_workers = utils.get_threads(use_threads)
+    _logger.info(f"max_workers iss {max_workers}")
     experiments_arg = _convert_dict_keys_to_list(experiments)
 
     if isinstance(experiments,str) and experiments.endswith(".txt"):
@@ -61,6 +62,8 @@ def export_experiments(
     else:
         export_all_runs = not isinstance(experiments, dict)
         experiments = bulk_utils.get_experiment_ids(mlflow_client, experiments)
+        _logger.info(f"Total model experiments to export: {len(experiments)}")
+
         if export_all_runs:
             table_data = experiments
             columns = ["Experiment Name or ID"]

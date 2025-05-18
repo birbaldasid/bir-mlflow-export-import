@@ -58,6 +58,7 @@ def export_models(
 
     mlflow_client = mlflow_client or create_mlflow_client()
     exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks)
+    _logger.info(f"len(exps_and_runs): {len(exps_and_runs)}")
     exp_ids = exps_and_runs.keys()
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
