@@ -68,7 +68,7 @@ print("run_timestamp:", run_timestamp)
 
 # COMMAND ----------
 
-assert_widget(output_dir, "1. Output directory")
+# assert_widget(output_dir, "1. Output directory")
 
 # COMMAND ----------
 

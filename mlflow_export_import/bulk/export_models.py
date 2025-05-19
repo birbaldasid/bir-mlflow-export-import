@@ -129,6 +129,8 @@ def _export_models(
         _logger.info(f"  {model_name}")
 
     futures = []
+
+    # TODO :: Add TRY/EXCEPT block here anf in FINALLY block, persist the futures (ok_models list) to table :: Birbal///////
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         for model_name in model_names:
             dir = os.path.join(output_dir, model_name)

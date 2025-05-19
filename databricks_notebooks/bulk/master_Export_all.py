@@ -49,11 +49,6 @@ print("num_tasks:", num_tasks)
 
 # COMMAND ----------
 
-run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-run_timestamp
-
-# COMMAND ----------
-
 DATABRICKS_INSTANCE=dbutils.notebook.entry_point.getDbutils().notebook().getContext().tags().get('browserHostName').getOrElse(None)
 DATABRICKS_INSTANCE = f"https://{DATABRICKS_INSTANCE}"
 DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)
@@ -61,7 +56,7 @@ DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getConte
 driver_node_type = "Standard_DS5_v2"
 worker_node_type = "Standard_D4ds_v5"
 
-def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks,run_timestamp):
+def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks):
     tasks = []
     for i in range(1, int(num_tasks)+1):
         task = {
@@ -89,7 +84,7 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
                     "use_threads": use_threads,
                     "task_index": i,
                     "num_tasks": num_tasks,
-                    "run_timestamp": run_timestamp
+                    "run_timestamp": "{{job.start_time.iso_date}}-jobid-{{job.id}}-jobrunid-{{job.run_id}}"
                 }
             }
         }
@@ -104,7 +99,7 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
     return job_json
 
 def submit_databricks_job():
-    job_payload = create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks,run_timestamp)
+    job_payload = create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks)
 
     headers = {
         "Authorization": f"Bearer {DATABRICKS_TOKEN}",
