@@ -49,7 +49,7 @@ task_index = int(dbutils.widgets.get("task_index"))
 
 num_tasks = int(dbutils.widgets.get("num_tasks"))
 
-run_timestamp = int(dbutils.widgets.get("run_timestamp"))
+run_timestamp = dbutils.widgets.get("run_timestamp")
  
 if run_start_date=="": run_start_date = None
 

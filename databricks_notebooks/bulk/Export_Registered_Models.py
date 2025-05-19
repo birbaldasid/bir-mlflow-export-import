@@ -81,7 +81,7 @@ if task_index == -1 and num_tasks == -1:
   dbfs_log_path = f"{output_dir}/Export_Registered_Models.log"
 else:
   output_dir = f"{output_dir}/{run_timestamp}/{task_index}"  
-  dbfs_log_path = f"{output_dir}/{run_timestamp}/Export_Registered_Models_{task_index}.log"
+  dbfs_log_path = f"{output_dir}/Export_Registered_Models_{task_index}.log"
 
 print("output_dir:", output_dir)
 print("dbfs_log_path:", dbfs_log_path)
