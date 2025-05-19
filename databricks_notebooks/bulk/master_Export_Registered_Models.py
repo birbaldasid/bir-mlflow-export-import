@@ -59,11 +59,6 @@ print("num_tasks:", num_tasks)
 
 # COMMAND ----------
 
-run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-run_timestamp
-
-# COMMAND ----------
-
 DATABRICKS_INSTANCE=dbutils.notebook.entry_point.getDbutils().notebook().getContext().tags().get('browserHostName').getOrElse(None)
 DATABRICKS_INSTANCE = f"https://{DATABRICKS_INSTANCE}"
 DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getContext().apiToken().getOrElse(None)
