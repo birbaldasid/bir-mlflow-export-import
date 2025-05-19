@@ -21,7 +21,6 @@
 # COMMAND ----------
 
 from mlflow_export_import.bulk import config
-from datetime import datetime
 import time
 
 # COMMAND ----------

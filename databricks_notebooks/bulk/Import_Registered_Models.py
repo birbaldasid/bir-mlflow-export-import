@@ -18,29 +18,63 @@
 
 # COMMAND ----------
 
-dbutils.widgets.text("1. Input directory", "") 
-input_dir = dbutils.widgets.get("1. Input directory")
+from mlflow_export_import.bulk import config
+import time
+
+# COMMAND ----------
+
+# dbutils.widgets.text("1. Input directory", "") 
+# input_dir = dbutils.widgets.get("1. Input directory")
+# input_dir = input_dir.replace("dbfs:","/dbfs")
+
+# dbutils.widgets.dropdown("2. Delete model","no",["yes","no"])
+# delete_model = dbutils.widgets.get("2. Delete model") == "yes"
+
+# dbutils.widgets.text("3. Model rename file","")
+# val = dbutils.widgets.get("3. Model rename file") 
+# model_rename_file = val or None 
+
+# dbutils.widgets.text("4. Experiment rename file","")
+# val = dbutils.widgets.get("4. Experiment rename file") 
+# experiment_rename_file = val or None 
+
+# dbutils.widgets.dropdown("5. Import permissions","no",["yes","no"])
+# import_permissions = dbutils.widgets.get("5. Import permissions") == "yes"
+
+# dbutils.widgets.dropdown("6. Import source tags","no",["yes","no"])
+# import_source_tags = dbutils.widgets.get("6. Import source tags") == "yes"
+
+# dbutils.widgets.dropdown("6. Use threads","no",["yes","no"])
+# use_threads = dbutils.widgets.get("6. Use threads") == "yes"
+
+# print("input_dir:", input_dir)
+# print("delete_model:", delete_model)
+# print("model_rename_file:     ", model_rename_file)
+# print("experiment_rename_file:", experiment_rename_file)
+# print("import_permissions:", import_permissions)
+# print("import_source_tags:", import_source_tags)
+# print("use_threads:", use_threads)
+
+# COMMAND ----------
+
+input_dir = dbutils.widgets.get("input_dir")
 input_dir = input_dir.replace("dbfs:","/dbfs")
 
-dbutils.widgets.dropdown("2. Delete model","no",["yes","no"])
-delete_model = dbutils.widgets.get("2. Delete model") == "yes"
+delete_model = dbutils.widgets.get("delete_model") == "true"
 
-dbutils.widgets.text("3. Model rename file","")
-val = dbutils.widgets.get("3. Model rename file") 
+val = dbutils.widgets.get("model_rename_file") 
 model_rename_file = val or None 
 
-dbutils.widgets.text("4. Experiment rename file","")
-val = dbutils.widgets.get("4. Experiment rename file") 
+val = dbutils.widgets.get("experiment_rename_file") 
 experiment_rename_file = val or None 
 
-dbutils.widgets.dropdown("5. Import permissions","no",["yes","no"])
-import_permissions = dbutils.widgets.get("5. Import permissions") == "yes"
+import_permissions = dbutils.widgets.get("import_permissions") == "true"
 
-dbutils.widgets.dropdown("6. Import source tags","no",["yes","no"])
-import_source_tags = dbutils.widgets.get("6. Import source tags") == "yes"
+import_source_tags = dbutils.widgets.get("import_source_tags") == "true"
 
-dbutils.widgets.dropdown("6. Use threads","no",["yes","no"])
-use_threads = dbutils.widgets.get("6. Use threads") == "yes"
+use_threads = dbutils.widgets.get("use_threads") == "yes"
+
+log_directory = dbutils.widgets.get("log_directory")
 
 print("input_dir:", input_dir)
 print("delete_model:", delete_model)
@@ -49,10 +83,20 @@ print("experiment_rename_file:", experiment_rename_file)
 print("import_permissions:", import_permissions)
 print("import_source_tags:", import_source_tags)
 print("use_threads:", use_threads)
+print("log_directory:", log_directory)
 
 # COMMAND ----------
 
 assert_widget(input_dir, "1. Input directory")
+
+# COMMAND ----------
+
+log_path=f"/tmp/my.log"
+log_path
+
+# COMMAND ----------
+
+config.log_path=log_path
 
 # COMMAND ----------
 
@@ -67,3 +111,28 @@ import_models(
     import_source_tags = import_source_tags,
     use_threads = use_threads
 )
+
+# COMMAND ----------
+
+time.sleep(10)
+
+# COMMAND ----------
+
+# MAGIC %sh cat /tmp/my.log
+
+# COMMAND ----------
+
+dbfs_log_path = f"{log_directory}/Import_Registered_Models.log"
+if dbfs_log_path.startswith("/Workspace"):
+    dbfs_log_path=dbfs_log_path.replace("/Workspace","file:/Workspace") 
+dbfs_log_path = dbfs_log_path.replace("/dbfs","dbfs:")
+dbfs_log_path
+
+# COMMAND ----------
+
+
+dbutils.fs.cp(f"file:{log_path}", dbfs_log_path)
+
+# COMMAND ----------
+
+print(dbutils.fs.head(dbfs_log_path))

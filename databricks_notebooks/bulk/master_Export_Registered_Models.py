@@ -7,7 +7,7 @@ import json
 dbutils.widgets.text("01. Models", "") 
 models = dbutils.widgets.get("01. Models")
 
-dbutils.widgets.text("02. Output directory", "dbfs:/mnt/andre-work/exim/experiments") 
+dbutils.widgets.text("02. Output directory", "/Workspace/Users/birbal.das@databricks.com/logs") 
 output_dir = dbutils.widgets.get("02. Output directory")
 output_dir = output_dir.replace("dbfs:","/dbfs")
 
@@ -84,7 +84,7 @@ def create_multi_task_job_json(models, output_dir, stages, export_latest_version
                         "runtime_engine": "STANDARD"
                     },
                     "notebook_task": {
-                        "notebook_path": "/Workspace/Users/birbal.das@databricks.com/mlflow-export-import-from-my-github-repo/bir-mlflow-export-import/databricks_notebooks/bulk/Export_Registered_Models",
+                        "notebook_path": "/Workspace/Users/birbal.das@databricks.com/bir-mlflow-export-import/databricks_notebooks/bulk/Export_Registered_Models",
                         "base_parameters": {
                                 "models" : models,
                                 "output_dir" : output_dir,
@@ -116,7 +116,7 @@ def create_multi_task_job_json(models, output_dir, stages, export_latest_version
                         "runtime_engine": "STANDARD"
                     },
                     "notebook_task": {
-                        "notebook_path": "/Workspace/Users/birbal.das@databricks.com/mlflow-export-import-from-my-github-repo/bir-mlflow-export-import/databricks_notebooks/bulk/Export_Registered_Models",
+                        "notebook_path": "/Workspace/Users/birbal.das@databricks.com/bir-mlflow-export-import/databricks_notebooks/bulk/Export_Registered_Models",
                         "base_parameters": {
                                 "models" : models,
                                 "output_dir" : output_dir,
