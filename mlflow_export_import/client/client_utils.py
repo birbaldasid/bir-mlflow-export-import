@@ -23,14 +23,28 @@ def create_dbx_client(mlflow_client):
     return DatabricksHttpClient(creds.host, creds.token)
 
 
-def create_mlflow_client():
+# def create_mlflow_client():  ##birbal commented out
+#     """
+#     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
+#     """
+#     registry_uri = mlflow.get_registry_uri()
+#     if registry_uri:
+#         tracking_uri = mlflow.get_tracking_uri()
+#         nonuc_tracking_uri = tracking_uri.replace("databricks-uc","databricks") # NOTE: legacy
+#         return mlflow.MlflowClient(nonuc_tracking_uri, registry_uri)
+#     else:
+#         return mlflow.MlflowClient()
+
+
+def create_mlflow_client():     ## Birbal Added
     """
     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
     """
     registry_uri = mlflow.get_registry_uri()
+    nonuc_registry_uri = registry_uri.replace("databricks-uc","databricks")
     if registry_uri:
         tracking_uri = mlflow.get_tracking_uri()
         nonuc_tracking_uri = tracking_uri.replace("databricks-uc","databricks") # NOTE: legacy
-        return mlflow.MlflowClient(nonuc_tracking_uri, registry_uri)
+        return mlflow.MlflowClient(nonuc_tracking_uri, nonuc_registry_uri)
     else:
         return mlflow.MlflowClient()

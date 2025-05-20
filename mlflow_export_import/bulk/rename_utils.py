@@ -6,6 +6,8 @@ _logger = utils.getLogger(__name__)
 
 
 def read_rename_file(path):
+    # if path == "null":  ##birbal
+    #     return None
     with open(mk_local_path(path), "r", encoding="utf-8") as f:
         dct = {}
         for line in f:
@@ -16,7 +18,9 @@ def read_rename_file(path):
 
 def rename(name, replacements, object_name="object"):
     if not replacements:
-        return name
+        _logger.info("replacements is noneeee") ## remove birbal... this was triggered which means replacements was None
+        # return None  ## birbal to change it to name
+        return name  ## birbal added
     for k,v in replacements.items():
         if k != "" and name.startswith(k):
             new_name = name.replace(k,v)

@@ -37,7 +37,7 @@ log_directory = dbutils.widgets.get("9. log_directory")
 
 print("input_dir:", input_dir)
 print("delete_model:", delete_model)
-print("model_rename_file:     ", model_rename_file)
+print("model_rename_file:", model_rename_file)
 print("experiment_rename_file:", experiment_rename_file)
 print("import_permissions:", import_permissions)
 print("import_source_tags:", import_source_tags)
@@ -76,7 +76,7 @@ def create_multi_task_job_json(input_dir, delete_model, model_rename_file, exper
                 "runtime_engine": "STANDARD"
             },
             "notebook_task": {
-                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/bir-mlflow-export-import/databricks_notebooks/bulk/Import_Registered_Models",
+                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/github/bir-mlflow-export-import/databricks_notebooks/bulk/Import_Registered_Models",
                 "base_parameters": {
                     "input_dir": os.path.join(input_dir,str(i)),
                     "delete_model": delete_model,
@@ -85,7 +85,8 @@ def create_multi_task_job_json(input_dir, delete_model, model_rename_file, exper
                     "import_permissions": import_permissions,
                     "import_source_tags": import_source_tags,
                     "use_threads": use_threads,
-                    "log_directory": os.path.join(log_directory,"{{job.start_time.iso_date}}-Import-jobid-{{job.id}}-jobrunid-{{job.run_id}}",str(i))
+                    "log_directory": os.path.join(log_directory,"{{job.start_time.iso_date}}-Import-jobid-{{job.id}}-jobrunid-{{job.run_id}}",str(i)),
+                    "task_index": str(i)
                 }
             }
         }

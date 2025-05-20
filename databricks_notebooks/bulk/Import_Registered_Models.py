@@ -62,11 +62,11 @@ input_dir = input_dir.replace("dbfs:","/dbfs")
 
 delete_model = dbutils.widgets.get("delete_model") == "true"
 
-val = dbutils.widgets.get("model_rename_file") 
-model_rename_file = val or None 
+val = dbutils.widgets.get("model_rename_file")
+model_rename_file = {} if val == "null" else val
 
 val = dbutils.widgets.get("experiment_rename_file") 
-experiment_rename_file = val or None 
+experiment_rename_file = {} if val == "null" else val
 
 import_permissions = dbutils.widgets.get("import_permissions") == "true"
 
@@ -76,14 +76,17 @@ use_threads = dbutils.widgets.get("use_threads") == "yes"
 
 log_directory = dbutils.widgets.get("log_directory")
 
+task_index = dbutils.widgets.get("task_index")
+
 print("input_dir:", input_dir)
 print("delete_model:", delete_model)
-print("model_rename_file:     ", model_rename_file)
+print("model_rename_file:", model_rename_file)
 print("experiment_rename_file:", experiment_rename_file)
 print("import_permissions:", import_permissions)
 print("import_source_tags:", import_source_tags)
 print("use_threads:", use_threads)
 print("log_directory:", log_directory)
+print("task_index:", task_index)
 
 # COMMAND ----------
 
@@ -91,7 +94,7 @@ assert_widget(input_dir, "1. Input directory")
 
 # COMMAND ----------
 
-log_path=f"/tmp/my.log"
+log_path=f"/tmp/Import_Registered_Models_{task_index}.log"
 log_path
 
 # COMMAND ----------
@@ -118,7 +121,7 @@ time.sleep(10)
 
 # COMMAND ----------
 
-# MAGIC %sh cat /tmp/my.log
+# %sh cat /tmp/my123.log
 
 # COMMAND ----------
 
