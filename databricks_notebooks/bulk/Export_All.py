@@ -82,6 +82,7 @@ log_path
 # COMMAND ----------
 
 config.log_path=log_path
+config.export_or_import="export"
 
 # COMMAND ----------
 

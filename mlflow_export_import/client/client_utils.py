@@ -1,5 +1,6 @@
 import mlflow
 from . http_client import HttpClient, MlflowHttpClient, DatabricksHttpClient
+from mlflow_export_import.bulk import config
 
 
 def create_http_client(mlflow_client, model_name=None):
@@ -55,5 +56,16 @@ def create_mlflow_client():  ##birbal commented out
     """
     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
     """
-    mlflow.set_registry_uri('databricks-uc')
-    return mlflow.MlflowClient()
+    export_or_import_type=config.export_or_import
+
+    if not export_or_import_type or export_or_import_type.lower() == "export":
+        mlflow.set_registry_uri('databricks')
+    elif export_or_import_type.lower() == "import":
+        mlflow.set_registry_uri('databricks-uc')
+    return mlflow.MlflowClient()    
+
+
+
+    # if config.export_or_import == "export":
+    # mlflow.set_registry_uri('databricks-uc')
+    # return mlflow.MlflowClient()
