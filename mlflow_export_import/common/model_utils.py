@@ -32,13 +32,18 @@ def create_model(client, model_name, model_dct, import_metadata):
     """
     try:
         if import_metadata:
+            _logger.info("if import_metadata triggered")  ##birbal
             tags = utils.mk_tags_dict(model_dct.get("tags"))
             client.create_registered_model(model_name, tags, model_dct.get("description"))
         else:
+            _logger.info("else import_metadata triggered")  ##birbal
             client.create_registered_model(model_name)
         _logger.info(f"Created new registered model '{model_name}'")
         return True
+    except Exception as e:
+        _logger.info(f"except Exception trigger, error for '{model_name}': {e}")
     except RestException as e:
+        _logger.info("except RestException trigggerd") ## birbal
         if e.error_code != "RESOURCE_ALREADY_EXISTS":
             raise e
         _logger.info(f"Registered model '{model_name}' already exists")
@@ -50,7 +55,7 @@ def delete_model(client, model_name, sleep_time=5):
     Delete a registered model and all its versions.
     """
     try:
-        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")
+        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")  ##### filter would fail for models name with single quote, Fix this. Fix other sections as well.
         _logger.info(f"Deleting model '{model_name}' and its versions")
         for vr in versions:
             msg = utils.get_obj_key_values(vr, [ "name", "version", "current_stage", "status", "run_id"  ])
