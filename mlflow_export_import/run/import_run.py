@@ -23,6 +23,9 @@ from mlflow_export_import.common import MlflowExportImportException
 from mlflow_export_import.client.client_utils import create_mlflow_client, create_dbx_client, create_http_client
 from . import run_data_importer
 from . import run_utils
+import mlflow.utils.databricks_utils as db_utils    #birbal added
+import requests #birbal added
+import json
 
 _logger = utils.getLogger(__name__)
 
@@ -72,7 +75,7 @@ def import_run(
     run = mlflow_client.create_run(exp.experiment_id)
     run_id = run.info.run_id
     try:
-        run_data_importer.import_run_data(
+        run_data_importer.import_run_data( 
             mlflow_client,
             src_run_dct,
             run_id,
@@ -99,34 +102,44 @@ def import_run(
         traceback.print_exc()
         raise MlflowExportImportException(e, f"Importing run {run_id} of experiment '{exp.name}' failed")
 
-    if utils.calling_databricks() and dst_notebook_dir:
-        _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook_dir)
+    # if utils.calling_databricks() and dst_notebook_dir:  ## birbal commented oout
+    if 1 == 1:
+        _logger.error(f"Im here 1==1 yaaaaaaaaaaaa")
+        # _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook_dir) #birbal commented out
+        _upload_databricks_notebook(mlflow_client, dbx_client, input_dir, src_run_dct, dst_notebook_dir,run_id) #birbal added.. passed mlflow_client 
 
     res = (run, src_run_dct["tags"].get(MLFLOW_PARENT_RUN_ID, None))
     _logger.info(f"Imported run '{run.info.run_id}' into experiment '{experiment_name}'")
     return res
 
 
-def _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook_dir):
-    run_id = src_run_dct["info"]["run_id"]
+# def _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook_dir): #birbal commented out
+def _upload_databricks_notebook(mlflow_client, dbx_client, input_dir, src_run_dct, dst_notebook_dir,run_id): #birbal added    
     tag_key = "mlflow.databricks.notebookPath"
     src_notebook_path = src_run_dct["tags"].get(tag_key,None)
     if not src_notebook_path:
         _logger.warning(f"No tag '{tag_key}' for run_id '{run_id}'")
         return
     notebook_name = os.path.basename(src_notebook_path)
+    dst_notebook_dir = os.path.dirname(src_notebook_path)
+
 
     format = "source"
-    notebook_path = _fs.make_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))
-    if not _fs.exists(notebook_path):
-        _logger.warning(f"Source '{notebook_path}' does not exist for run_id '{run_id}'")
-        return
+    # notebook_path = _fs.make_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))  #birbal make_local_path should be mk_local_path
+    # notebook_path = _fs.mk_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))  #birbal added
+    # if not _fs.exists(notebook_path):
+    #     _logger.warning(f"Source '{notebook_path}' does not exist for run_id '{run_id}'")
+    #     return
+    notebook_path = os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}") #birbal added
 
     with open(notebook_path, "r", encoding="utf-8") as f:
         content = f.read()
-    dst_notebook_path = os.path.join(dst_notebook_dir, notebook_name)
+    # dst_notebook_path = os.path.join(dst_notebook_dir, notebook_name) #birbal commented out
+    dst_notebook_path = src_notebook_path #birbal added
+    
+
     content = base64.b64encode(content.encode()).decode("utf-8")
-    data = {
+    payload = {
         "path": dst_notebook_path,
         "language": "PYTHON",
         "format": format,
@@ -136,10 +149,57 @@ def _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook
     mlflow_utils.create_workspace_dir(dbx_client, dst_notebook_dir)
     try:
         _logger.info(f"Importing notebook '{dst_notebook_path}' for run {run_id}")
-        dbx_client._post("workspace/import", data)
-    except MlflowExportImportException as e:
+        # dbx_client._post("workspace/import", data) #birbal commented out
+        create_notebook(mlflow_client,payload) #birbal added
+        update_notebook_lineage(mlflow_client,run_id,dst_notebook_path) #birbal added
+        
+    # except MlflowExportImportException as e: ##birbal commented out
+    except Exception as e:  #birbal added
         _logger.warning(f"Cannot save notebook '{dst_notebook_path}'. {e}")
 
+
+def create_notebook(mlflow_client,payload): #birbal added
+
+    creds = mlflow_client._tracking_client.store.get_host_creds()
+    host = creds.host
+    token = creds.token
+
+    headers = {
+    "Authorization": f"Bearer {token}"
+    }
+    response = requests.post(
+        f"{host}/api/2.0/workspace/import",
+        headers=headers,
+        json=payload
+    )
+    if response.status_code == 200:
+        _logger.info(f"notebook impotredddd thru api call")
+    else:
+        _logger.error("notebook failed to import  thru api call")
+
+
+
+def update_notebook_lineage(mlflow_client,run_id,dst_notebook_path):
+        _logger.info(f"in update_notebook_lineage...host is {db_utils.get_workspace_url()}")
+        host=db_utils.get_workspace_url()
+        token=db_utils.get_databricks_host_creds().token
+
+        HEADERS = {
+            'Authorization': f'Bearer {token}'
+        }
+
+        get_url = f'{host}/api/2.0/workspace/get-status'
+        params = {'path': dst_notebook_path}
+        response = requests.get(get_url, headers=HEADERS, params=params)
+        response.raise_for_status()
+        notebook_object = response.json()
+        notebook_id = notebook_object.get("object_id")
+
+        mlflow_client.set_tag(run_id, "mlflow.source.name", dst_notebook_path)
+        mlflow_client.set_tag(run_id, "mlflow.source.type", "NOTEBOOK")
+        mlflow_client.set_tag(run_id, "mlflow.databricks.notebookID", notebook_id)
+        mlflow_client.set_tag(run_id, "mlflow.databricks.workspaceURL", host)
+        _logger.info(f"dst_notebook_path iss {dst_notebook_path}, notebook_id issss {notebook_id}, run_id izzz {run_id}")
 
 def _import_inputs(http_client, src_run_dct, run_id):
     inputs = src_run_dct.get("inputs")

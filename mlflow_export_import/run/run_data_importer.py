@@ -13,6 +13,9 @@ from mlflow_export_import.common.source_tags import ExportTags
 from mlflow_export_import.common.source_tags import mk_source_tags_mlflow_tag, mk_source_tags
 
 
+_logger = utils.getLogger(__name__) #birbal added
+
+
 def _log_data(run_dct, run_id, batch_size, get_data, log_data, args_get_data=None):
     metadata = get_data(run_dct, args_get_data)
     num_batches = int(math.ceil(len(metadata) / batch_size))
@@ -23,7 +26,6 @@ def _log_data(run_dct, run_id, batch_size, get_data, log_data, args_get_data=Non
         batch = metadata[start:end]
         log_data(run_id, batch)
         res = res + batch
-
 
 def _log_params(client, run_dct, run_id, batch_size):
     def get_data(run_dct, args):
@@ -52,13 +54,29 @@ def _log_tags(client, run_dct, run_id, batch_size, import_source_tags, in_databr
 
     def get_data(run_dct, args):
         tags = run_dct["tags"]
+        _logger.info("birrrr beforeeee import_source_tags") #birbal added
         if import_source_tags:
+            _logger.info("birrrrbbbbbb in import_source_tags") #birbal added
             source_mlflow_tags = mk_source_tags_mlflow_tag(tags)
             info =  run_dct["info"]
             source_info_tags = mk_source_tags(info, f"{ExportTags.PREFIX_RUN_INFO}")
             tags = { **tags, **source_mlflow_tags, **source_info_tags }
         tags = utils.create_mlflow_tags_for_databricks_import(tags) # remove "mlflow" tags that cannot be imported into Databricks
         tags = [ RunTag(k,v) for k,v in tags.items() ]
+
+        #### block added by Birbal        
+        # tags = [
+        #         RunTag(
+        #             k,
+        #             "https://"+db_utils.get_browser_hostname() if k == "mlflow.databricks.workspaceURL" else
+        #             "553533321569944" if k == "mlflow.databricks.notebookID" else v
+        #         )
+        #         for k, v in tags.items()
+        #     ]
+        # for k,v in tags:
+        #     _logger.error(f"k is {k} and v is {v}")
+        ####
+
         if not in_databricks:
             utils.set_dst_user_id(tags, args["src_user_id"], args["use_src_user_id"])
         return tags
@@ -73,13 +91,14 @@ def _log_tags(client, run_dct, run_id, batch_size, import_source_tags, in_databr
     }
 
     _log_data(run_dct, run_id, batch_size, get_data, log_data, args_get)
+    
 
 
 def import_run_data(mlflow_client, run_dct, run_id, import_source_tags, src_user_id, use_src_user_id, in_databricks):
     from mlflow.utils.validation import MAX_PARAMS_TAGS_PER_BATCH, MAX_METRICS_PER_BATCH
     _log_params(mlflow_client, run_dct, run_id, MAX_PARAMS_TAGS_PER_BATCH)
     _log_metrics(mlflow_client, run_dct, run_id, MAX_METRICS_PER_BATCH)
-    _log_tags(
+    _log_tags( 
         mlflow_client,
         run_dct,
         run_id,
@@ -88,8 +107,7 @@ def import_run_data(mlflow_client, run_dct, run_id, import_source_tags, src_user
         in_databricks,
         src_user_id,
         use_src_user_id
-)
-
+    )
 
 if __name__ == "__main__":
     import sys
