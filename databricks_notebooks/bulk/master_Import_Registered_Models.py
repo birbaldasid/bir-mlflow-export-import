@@ -76,7 +76,7 @@ def create_multi_task_job_json(input_dir, delete_model, model_rename_file, exper
                 "runtime_engine": "STANDARD"
             },
             "notebook_task": {
-                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/mlflow/bir-mlflow-export-import/databricks_notebooks/bulk/Import_Registered_Models",
+                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/test_final/bir-mlflow-export-import/databricks_notebooks/bulk/Import_Registered_Models",
                 "base_parameters": {
                     "input_dir": os.path.join(input_dir,str(i)),
                     "delete_model": delete_model,
