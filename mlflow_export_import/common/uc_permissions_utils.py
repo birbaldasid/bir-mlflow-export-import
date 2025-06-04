@@ -26,7 +26,7 @@ class UcPermissionsClient:
         resource = f"unity-catalog/effective-permissions/function/{model_name}"
         return self.client.get(resource)
 
-    # def update_permissions(self, model_name, changes):
+    # def update_permissions(self, model_name, changes): #birbal commented out entire func def
     #     """
     #     https://docs.databricks.com/api/workspace/grants/update
     #     PATCH /api/2.1/unity-catalog/permissions/{securable_type}/{full_name}
@@ -35,8 +35,8 @@ class UcPermissionsClient:
     #     _logger.info(f"Updating {len(changes.get('changes',[]))} permissions for model '{model_name}'. Resource: {resource}")
     #     return self.client.patch(resource, changes)
 
-    # def update_permissions(self, model_name, changes): #birbal commented out
-    def update_permissions(self, object_type, object_name , changes): #birbal added
+    
+    def update_permissions(self, object_type, object_name , changes): #birbal modified the above block
         """
         https://docs.databricks.com/api/workspace/grants/update
         PATCH /api/2.1/unity-catalog/permissions/{securable_type}/{full_name}
@@ -62,10 +62,10 @@ def get_permissions(mlflow_client, model_name):
 
 
 
-def update_permissions_nonucsrc_uctgt(mlflow_client, model_name, perms): ##birbal added entire func.
+def update_permissions_nonucsrc_uctgt(mlflow_client, model_name, perms): ##birbal added this entire func.
 
     try:
-        _logger.info(f"inside update_permissions_nonucsrc_uctgt. BEFORE perms is {perms}")
+        _logger.info(f"BEFORE perms is {perms}")
         uc_client = UcPermissionsClient(mlflow_client)
         model_perm_dict, catalog_perm_dict, schema_perm_dict = format_perms(perms)
         _logger.info(f"AFTER model_perm_dict is {model_perm_dict}")
@@ -78,10 +78,10 @@ def update_permissions_nonucsrc_uctgt(mlflow_client, model_name, perms): ##birba
         uc_client.update_permissions("schema", catalog+"."+schema, schema_perm_dict)
         uc_client.update_permissions("function", model_name, model_perm_dict)
     except Exception as e:
-        _logger.error(f"error with update_permissions for model '{model_name}'. Errorrrr is {e}")
+        _logger.error(f"error with update_permissions for model '{model_name}'. Error: {e}")
 
 
-def format_perms(perms):
+def format_perms(perms):    ##birbal added this entire func.
     model_perm = []
     catalog_perm=[]
     schema_perm=[]
@@ -132,14 +132,11 @@ def format_perms(perms):
 
 
 def update_permissions(mlflow_client, model_name, perms, unroll_changes=True): 
-    _logger.info(f"inside update_permissionssssssss. perms is {perms}") #birbal added
     uc_client = UcPermissionsClient(mlflow_client)
     changes = _mk_update_changes(perms)
     if unroll_changes: # NOTE: in order to prevent batch update to fail because one individual update failed
         unrolled_changes = _mk_unrolled_changes(changes)
-        _logger.info(f"unrolled_changessssssss: {unrolled_changes}") #birbal added
         for _changes in unrolled_changes:
-            _logger.info(f"_changessssssss: {_changes}")    #birbal added
             _update_changes(uc_client, model_name, _changes)
     else:
         _update_changes(uc_client, model_name, changes)
