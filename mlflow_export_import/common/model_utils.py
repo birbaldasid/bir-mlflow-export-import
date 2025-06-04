@@ -26,6 +26,11 @@ def model_names_same_registry(name1, name2):
         not is_unity_catalog_model(name1) and not is_unity_catalog_model(name2)
 
 
+def model_names_same_registry_nonucsrc_uctgt(name1, name2):
+    return \
+        not is_unity_catalog_model(name1) and is_unity_catalog_model(name2)
+
+
 def create_model(client, model_name, model_dct, import_metadata):
     """
     Creates a registered model if it does not exist, and returns the model in either case.
@@ -206,11 +211,15 @@ def get_registered_model(mlflow_client, model_name, get_permissions=False):
     return model
 
 
-def update_model_permissions(mlflow_client, dbx_client, model_name, perms):
+# def update_model_permissions(mlflow_client, dbx_client, model_name, perms): #birbal commented out
+def update_model_permissions(mlflow_client, dbx_client, model_name, perms, nonucsrc_uctgt = False): #birbal commented out...added 
     if perms:
         _logger.info(f"Updating permissions for registered model '{model_name}'")
-        if is_unity_catalog_model(model_name):
+        # if is_unity_catalog_model(model_name): #birbal commented out
+        if is_unity_catalog_model(model_name) and not nonucsrc_uctgt: #birbal cadded
             uc_permissions_utils.update_permissions(mlflow_client, model_name, perms)
+        elif is_unity_catalog_model(model_name) and nonucsrc_uctgt: #birbal cadded
+            uc_permissions_utils.update_permissions_nonucsrc_uctgt(mlflow_client, model_name, perms)
         else:
             _model = dbx_client.get("mlflow/databricks/registered-models/get", { "name": model_name })
             _model = _model["registered_model_databricks"]

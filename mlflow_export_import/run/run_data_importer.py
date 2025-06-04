@@ -64,19 +64,6 @@ def _log_tags(client, run_dct, run_id, batch_size, import_source_tags, in_databr
         tags = utils.create_mlflow_tags_for_databricks_import(tags) # remove "mlflow" tags that cannot be imported into Databricks
         tags = [ RunTag(k,v) for k,v in tags.items() ]
 
-        #### block added by Birbal        
-        # tags = [
-        #         RunTag(
-        #             k,
-        #             "https://"+db_utils.get_browser_hostname() if k == "mlflow.databricks.workspaceURL" else
-        #             "553533321569944" if k == "mlflow.databricks.notebookID" else v
-        #         )
-        #         for k, v in tags.items()
-        #     ]
-        # for k,v in tags:
-        #     _logger.error(f"k is {k} and v is {v}")
-        ####
-
         if not in_databricks:
             utils.set_dst_user_id(tags, args["src_user_id"], args["use_src_user_id"])
         return tags
