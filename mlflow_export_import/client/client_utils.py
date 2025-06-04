@@ -24,7 +24,7 @@ def create_dbx_client(mlflow_client):
     return DatabricksHttpClient(creds.host, creds.token)
 
 
-# def create_mlflow_client():  ##birbal commented out
+# def create_mlflow_client():  ##birbal . This is original block. commented out
 #     """
 #     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
 #     """
@@ -37,22 +37,7 @@ def create_dbx_client(mlflow_client):
 #         return mlflow.MlflowClient()
 
 
-# def create_mlflow_client():     ## Birbal Added
-#     """
-#     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
-#     """
-#     registry_uri = mlflow.get_registry_uri()
-#     nonuc_registry_uri = registry_uri.replace("databricks-uc","databricks")
-#     # nonuc_registry_uri = registry_uri.replace("databricks-uc","databricks-uc")
-#     if registry_uri:
-#         tracking_uri = mlflow.get_tracking_uri()
-#         nonuc_tracking_uri = tracking_uri.replace("databricks-uc","databricks") # NOTE: legacy
-#         return mlflow.MlflowClient(nonuc_tracking_uri, nonuc_registry_uri)
-#     else:
-#         return mlflow.MlflowClient()
-
-
-def create_mlflow_client():  ##birbal commented out
+def create_mlflow_client():  ##birbal added. Modified version of above. 
     """
     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
     """
@@ -62,10 +47,4 @@ def create_mlflow_client():  ##birbal commented out
         mlflow.set_registry_uri('databricks')
     elif export_or_import_type.lower() == "import":
         mlflow.set_registry_uri('databricks-uc')
-    return mlflow.MlflowClient()    
-
-
-
-    # if config.export_or_import == "export":
-    # mlflow.set_registry_uri('databricks-uc')
-    # return mlflow.MlflowClient()
+    return mlflow.MlflowClient()
