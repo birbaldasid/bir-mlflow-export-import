@@ -103,7 +103,7 @@ def import_run(
         raise MlflowExportImportException(e, f"Importing run {run_id} of experiment '{exp.name}' failed")
 
     # if utils.calling_databricks() and dst_notebook_dir:  ## birbal commented oout
-    if 1 == 1:
+    if utils.calling_databricks(): #birbal added
         _logger.error(f"Im here 1==1 yaaaaaaaaaaaa")
         # _upload_databricks_notebook(dbx_client, input_dir, src_run_dct, dst_notebook_dir) #birbal commented out
         _upload_databricks_notebook(mlflow_client, dbx_client, input_dir, src_run_dct, dst_notebook_dir,run_id) #birbal added.. passed mlflow_client 
@@ -125,11 +125,10 @@ def _upload_databricks_notebook(mlflow_client, dbx_client, input_dir, src_run_dc
 
 
     format = "source"
-    # notebook_path = _fs.make_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))  #birbal make_local_path should be mk_local_path
-    # notebook_path = _fs.mk_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))  #birbal added
-    # if not _fs.exists(notebook_path):
-    #     _logger.warning(f"Source '{notebook_path}' does not exist for run_id '{run_id}'")
-    #     return
+    # notebook_path = _fs.make_local_path(os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}"))  #birbal commented out. By the way- make_local_path should be mk_local_path
+    # if not _fs.exists(notebook_path): #birbal commented out
+    #     _logger.warning(f"Source '{notebook_path}' does not exist for run_id '{run_id}'") #birbal commented out
+    #     return    #birbal commented out
     notebook_path = os.path.join(input_dir,"artifacts","notebooks",f"{notebook_name}.{format}") #birbal added
 
     with open(notebook_path, "r", encoding="utf-8") as f:
@@ -158,7 +157,7 @@ def _upload_databricks_notebook(mlflow_client, dbx_client, input_dir, src_run_dc
         _logger.warning(f"Cannot save notebook '{dst_notebook_path}'. {e}")
 
 
-def create_notebook(mlflow_client,payload): #birbal added
+def create_notebook(mlflow_client,payload): #birbal added this entire block
 
     creds = mlflow_client._tracking_client.store.get_host_creds()
     host = creds.host
@@ -179,7 +178,7 @@ def create_notebook(mlflow_client,payload): #birbal added
 
 
 
-def update_notebook_lineage(mlflow_client,run_id,dst_notebook_path):
+def update_notebook_lineage(mlflow_client,run_id,dst_notebook_path):    #birbal added this entire block
         _logger.info(f"in update_notebook_lineage...host is {db_utils.get_workspace_url()}")
         host=db_utils.get_workspace_url()
         token=db_utils.get_databricks_host_creds().token
