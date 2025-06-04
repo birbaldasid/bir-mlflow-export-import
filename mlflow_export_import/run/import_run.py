@@ -36,7 +36,8 @@ def import_run(
         dst_notebook_dir = None,
         use_src_user_id = False,
         mlmodel_fix = True,
-        mlflow_client = None
+        mlflow_client = None,
+        exp = None
     ):
     """
     Imports a run into the specified experiment.
@@ -67,7 +68,10 @@ def import_run(
 
     _logger.info(f"Importing run from '{input_dir}'")
 
-    exp = mlflow_utils.set_experiment(mlflow_client, dbx_client, experiment_name)
+    # exp = mlflow_utils.set_experiment(mlflow_client, dbx_client, experiment_name)
+    if not exp: #birbal added
+        exp = mlflow_utils.set_experiment(mlflow_client, dbx_client, experiment_name)
+
     src_run_path = os.path.join(input_dir, "run.json")
     src_run_dct = io_utils.read_file_mlflow(src_run_path)
     in_databricks = "DATABRICKS_RUNTIME_VERSION" in os.environ
