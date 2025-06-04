@@ -109,7 +109,7 @@ def format_perms(perms):
             if 'group_name' in acl:
               group_name = acl['group_name']
               if group_name == "admins":
-                  group_name = "Admins"
+                  continue
               model_perm.append({
                   "add": [permission_type],
                   "principal": group_name
