@@ -20,73 +20,49 @@
 
 from mlflow_export_import.bulk import config
 import time
+from datetime import datetime
 
 # COMMAND ----------
 
-# dbutils.widgets.text("1. Input directory", "") 
-# input_dir = dbutils.widgets.get("1. Input directory")
-# input_dir = input_dir.replace("dbfs:","/dbfs")
-
-# dbutils.widgets.dropdown("2. Delete model","no",["yes","no"])
-# delete_model = dbutils.widgets.get("2. Delete model") == "yes"
-
-# dbutils.widgets.text("3. Model rename file","")
-# val = dbutils.widgets.get("3. Model rename file") 
-# model_rename_file = val or None 
-
-# dbutils.widgets.text("4. Experiment rename file","")
-# val = dbutils.widgets.get("4. Experiment rename file") 
-# experiment_rename_file = val or None 
-
-# dbutils.widgets.dropdown("5. Import permissions","no",["yes","no"])
-# import_permissions = dbutils.widgets.get("5. Import permissions") == "yes"
-
-# dbutils.widgets.dropdown("6. Import source tags","no",["yes","no"])
-# import_source_tags = dbutils.widgets.get("6. Import source tags") == "yes"
-
-# dbutils.widgets.dropdown("6. Use threads","no",["yes","no"])
-# use_threads = dbutils.widgets.get("6. Use threads") == "yes"
-
-# print("input_dir:", input_dir)
-# print("delete_model:", delete_model)
-# print("model_rename_file:     ", model_rename_file)
-# print("experiment_rename_file:", experiment_rename_file)
-# print("import_permissions:", import_permissions)
-# print("import_source_tags:", import_source_tags)
-# print("use_threads:", use_threads)
-
-# COMMAND ----------
-
+dbutils.widgets.text("input_dir", "") 
 input_dir = dbutils.widgets.get("input_dir")
 input_dir = input_dir.replace("dbfs:","/dbfs")
 
+dbutils.widgets.dropdown("delete_model","false",["true","false"])
 delete_model = dbutils.widgets.get("delete_model") == "true"
 
-val = dbutils.widgets.get("model_rename_file")
-model_rename_file = {} if val == "null" else val
+dbutils.widgets.text("model_rename_file","")
+val = dbutils.widgets.get("model_rename_file") 
+model_rename_file = {} if val in ("null", None, "") else val
 
+dbutils.widgets.text("experiment_rename_file","")
 val = dbutils.widgets.get("experiment_rename_file") 
-experiment_rename_file = {} if val == "null" else val
+experiment_rename_file = {} if val in ("null", None, "") else val
 
+dbutils.widgets.dropdown("import_permissions","false",["true","false"])
 import_permissions = dbutils.widgets.get("import_permissions") == "true"
 
-import_source_tags = dbutils.widgets.get("import_source_tags") == "true"
-
-use_threads = dbutils.widgets.get("use_threads") == "yes"
-
-log_directory = dbutils.widgets.get("log_directory")
-
+dbutils.widgets.text("task_index", "") 
 task_index = dbutils.widgets.get("task_index")
+
 
 print("input_dir:", input_dir)
 print("delete_model:", delete_model)
-print("model_rename_file:", model_rename_file)
+print("model_rename_file:     ", model_rename_file)
 print("experiment_rename_file:", experiment_rename_file)
 print("import_permissions:", import_permissions)
-print("import_source_tags:", import_source_tags)
-print("use_threads:", use_threads)
-print("log_directory:", log_directory)
 print("task_index:", task_index)
+
+# COMMAND ----------
+
+print(f"experiment_rename_file is {experiment_rename_file}")
+print(f"experiment_rename_file type is {type(experiment_rename_file)}")
+
+print(f"model_rename_file is {model_rename_file}")
+print(f"model_rename_file type is {type(model_rename_file)}")
+
+print(f"delete_model is {delete_model}")
+print(f"import_permissions is {import_permissions}")
 
 # COMMAND ----------
 
@@ -112,8 +88,8 @@ import_models(
     model_renames = model_rename_file,
     experiment_renames = experiment_rename_file,
     import_permissions = import_permissions,
-    import_source_tags = import_source_tags,
-    use_threads = use_threads
+    import_source_tags = False, ## Birbal:: Do not set to True. else it will import junk mlflow tags. Setting to False WILL import all source tags by default.
+    use_threads = True
 )
 
 # COMMAND ----------
@@ -122,11 +98,9 @@ time.sleep(10)
 
 # COMMAND ----------
 
-# %sh cat /tmp/my123.log
+curr_timestamp = datetime.now().strftime("%Y-%m-%dT%H:%M:%S")
 
-# COMMAND ----------
-
-dbfs_log_path = f"{log_directory}/Import_Registered_Models.log"
+dbfs_log_path = f"{input_dir}/Import_Registered_Models_{task_index}_{curr_timestamp}.log"
 if dbfs_log_path.startswith("/Workspace"):
     dbfs_log_path=dbfs_log_path.replace("/Workspace","file:/Workspace") 
 dbfs_log_path = dbfs_log_path.replace("/dbfs","dbfs:")

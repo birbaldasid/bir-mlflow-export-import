@@ -37,18 +37,15 @@ def create_model(client, model_name, model_dct, import_metadata):
     """
     try:
         if import_metadata:
-            _logger.info("if import_metadata triggered")  ##birbal
             tags = utils.mk_tags_dict(model_dct.get("tags"))
             client.create_registered_model(model_name, tags, model_dct.get("description"))
         else:
-            _logger.info("else import_metadata triggered")  ##birbal
             client.create_registered_model(model_name)
         _logger.info(f"Created new registered model '{model_name}'")
         return True
     except Exception as e:
         _logger.info(f"except Exception trigger, error for '{model_name}': {e}")
     except RestException as e:
-        _logger.info("except RestException trigggerd") ## birbal
         if e.error_code != "RESOURCE_ALREADY_EXISTS":
             raise e
         _logger.info(f"Registered model '{model_name}' already exists")
@@ -60,7 +57,7 @@ def delete_model(client, model_name, sleep_time=5):
     Delete a registered model and all its versions.
     """
     try:
-        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")  ##### filter would fail for models name with single quote, Fix this. Fix other sections as well.
+        versions = SearchModelVersionsIterator(client, filter=f"name='{model_name}'")
         _logger.info(f"Deleting model '{model_name}' and its versions")
         for vr in versions:
             msg = utils.get_obj_key_values(vr, [ "name", "version", "current_stage", "status", "run_id"  ])
@@ -70,8 +67,10 @@ def delete_model(client, model_name, sleep_time=5):
                 time.sleep(sleep_time) # Wait until stage transition takes hold
             client.delete_model_version(model_name, vr.version)
         client.delete_registered_model(model_name)
-    except RestException:
-        pass
+    # except RestException: #birbal commented out
+    except Exception as e:
+        _logger.error(f"Error deleting modfel {model_name}. Error: {e}")
+        
 
 
 def list_model_versions(client, model_name, get_latest_versions=False):
@@ -211,14 +210,12 @@ def get_registered_model(mlflow_client, model_name, get_permissions=False):
     return model
 
 
-# def update_model_permissions(mlflow_client, dbx_client, model_name, perms): #birbal commented out
-def update_model_permissions(mlflow_client, dbx_client, model_name, perms, nonucsrc_uctgt = False): #birbal commented out...added 
+def update_model_permissions(mlflow_client, dbx_client, model_name, perms, nonucsrc_uctgt = False): #birbal added nonucsrc_uctgt parameter
     if perms:
         _logger.info(f"Updating permissions for registered model '{model_name}'")
-        # if is_unity_catalog_model(model_name): #birbal commented out
-        if is_unity_catalog_model(model_name) and not nonucsrc_uctgt: #birbal cadded
+        if is_unity_catalog_model(model_name) and not nonucsrc_uctgt: #birbal added
             uc_permissions_utils.update_permissions(mlflow_client, model_name, perms)
-        elif is_unity_catalog_model(model_name) and nonucsrc_uctgt: #birbal cadded
+        elif is_unity_catalog_model(model_name) and nonucsrc_uctgt: #birbal added
             uc_permissions_utils.update_permissions_nonucsrc_uctgt(mlflow_client, model_name, perms)
         else:
             _model = dbx_client.get("mlflow/databricks/registered-models/get", { "name": model_name })

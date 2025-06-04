@@ -23,27 +23,15 @@ experiment_rename_file = val or None
 dbutils.widgets.dropdown("5. Import permissions","no",["yes","no"])
 import_permissions = dbutils.widgets.get("5. Import permissions") == "yes"
 
-dbutils.widgets.dropdown("6. Import source tags","no",["yes","no"])
-import_source_tags = dbutils.widgets.get("6. Import source tags") == "yes"
-
-dbutils.widgets.dropdown("7. Use threads","no",["yes","no"])
-use_threads = dbutils.widgets.get("7. Use threads") == "yes"
-
-dbutils.widgets.text("8. num_tasks", "") 
-num_tasks = dbutils.widgets.get("8. num_tasks")
-
-dbutils.widgets.text("9. log_directory", "") 
-log_directory = dbutils.widgets.get("9. log_directory")
+dbutils.widgets.text("6. num_tasks", "") 
+num_tasks = dbutils.widgets.get("6. num_tasks")
 
 print("input_dir:", input_dir)
 print("delete_model:", delete_model)
 print("model_rename_file:", model_rename_file)
 print("experiment_rename_file:", experiment_rename_file)
 print("import_permissions:", import_permissions)
-print("import_source_tags:", import_source_tags)
-print("use_threads:", use_threads)
 print("num_tasks:", num_tasks)
-print("log_directory:", log_directory)
 
 # COMMAND ----------
 
@@ -61,7 +49,7 @@ DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getConte
 driver_node_type = "Standard_D4ds_v5"
 worker_node_type = "Standard_D4ds_v5"
 
-def create_multi_task_job_json(input_dir, delete_model, model_rename_file, experiment_rename_file, import_permissions, import_source_tags, use_threads, num_tasks):
+def create_multi_task_job_json(input_dir, delete_model, model_rename_file, experiment_rename_file, import_permissions, num_tasks):
     tasks = []
     for i in range(1, int(num_tasks)+1):
         task = {
@@ -83,9 +71,6 @@ def create_multi_task_job_json(input_dir, delete_model, model_rename_file, exper
                     "model_rename_file": model_rename_file,
                     "experiment_rename_file": experiment_rename_file,
                     "import_permissions": import_permissions,
-                    "import_source_tags": import_source_tags,
-                    "use_threads": use_threads,
-                    "log_directory": os.path.join(log_directory,"{{job.start_time.iso_date}}-Import-jobid-{{job.id}}-jobrunid-{{job.run_id}}",str(i)),
                     "task_index": str(i)
                 }
             }
@@ -101,7 +86,7 @@ def create_multi_task_job_json(input_dir, delete_model, model_rename_file, exper
     return job_json
 
 def submit_databricks_job():
-    job_payload = create_multi_task_job_json(input_dir, delete_model, model_rename_file, experiment_rename_file, import_permissions, import_source_tags, use_threads, num_tasks)
+    job_payload = create_multi_task_job_json(input_dir, delete_model, model_rename_file, experiment_rename_file, import_permissions, num_tasks)
 
     headers = {
         "Authorization": f"Bearer {DATABRICKS_TOKEN}",
