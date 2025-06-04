@@ -47,7 +47,6 @@ def import_experiments(
     """
 
     experiment_renames = rename_utils.get_renames(experiment_renames)
-    _logger.error(f"experiment_renames is {experiment_renames} hereeee")
 
     mlflow_client = mlflow_client or mlflow.MlflowClient()
     dct = io_utils.read_file_mlflow(os.path.join(input_dir, "experiments.json"))

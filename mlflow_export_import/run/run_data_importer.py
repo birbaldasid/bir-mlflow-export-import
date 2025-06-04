@@ -13,8 +13,6 @@ from mlflow_export_import.common.source_tags import ExportTags
 from mlflow_export_import.common.source_tags import mk_source_tags_mlflow_tag, mk_source_tags
 
 
-_logger = utils.getLogger(__name__) #birbal added
-
 
 def _log_data(run_dct, run_id, batch_size, get_data, log_data, args_get_data=None):
     metadata = get_data(run_dct, args_get_data)
@@ -54,9 +52,7 @@ def _log_tags(client, run_dct, run_id, batch_size, import_source_tags, in_databr
 
     def get_data(run_dct, args):
         tags = run_dct["tags"]
-        _logger.info("birrrr beforeeee import_source_tags") #birbal added
         if import_source_tags:
-            _logger.info("birrrrbbbbbb in import_source_tags") #birbal added
             source_mlflow_tags = mk_source_tags_mlflow_tag(tags)
             info =  run_dct["info"]
             source_info_tags = mk_source_tags(info, f"{ExportTags.PREFIX_RUN_INFO}")

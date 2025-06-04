@@ -21,12 +21,22 @@
 from mlflow_export_import.bulk import config
 import time
 from datetime import datetime
+from databricks.sdk import WorkspaceClient
 
 # COMMAND ----------
 
 dbutils.widgets.text("input_dir", "") 
 input_dir = dbutils.widgets.get("input_dir")
 input_dir = input_dir.replace("dbfs:","/dbfs")
+
+dbutils.widgets.dropdown("target_model_registry","unity_catalog",["unity_catalog","workspace_registry"])
+target_model_registry = dbutils.widgets.get("target_model_registry")
+
+dbutils.widgets.text("target_model_catalog", "") 
+target_model_catalog = dbutils.widgets.get("target_model_catalog")
+
+dbutils.widgets.text("target_model_schema", "") 
+target_model_schema = dbutils.widgets.get("target_model_schema")
 
 dbutils.widgets.dropdown("delete_model","false",["true","false"])
 delete_model = dbutils.widgets.get("delete_model") == "true"
@@ -47,6 +57,9 @@ task_index = dbutils.widgets.get("task_index")
 
 
 print("input_dir:", input_dir)
+print("target_model_registry:", target_model_registry)
+print("target_model_catalog:", target_model_catalog)
+print("target_model_schema:", target_model_schema)
 print("delete_model:", delete_model)
 print("model_rename_file:     ", model_rename_file)
 print("experiment_rename_file:", experiment_rename_file)
@@ -66,7 +79,43 @@ print(f"import_permissions is {import_permissions}")
 
 # COMMAND ----------
 
-assert_widget(input_dir, "1. Input directory")
+if not input_dir:
+    raise ValueError("input_dir cannot be empty")
+if not input_dir.startswith("/dbfs/mnt"):
+    raise ValueError("input_dir must start with /dbfs/mnt")
+if not task_index:
+    raise ValueError("task_index cannot be empty")
+if not task_index.isdigit():
+    raise ValueError("task_index must be a number")
+
+# COMMAND ----------
+
+if target_model_registry == "unity_catalog" and (not target_model_catalog or not target_model_schema):
+    raise ValueError("target_model_catalog and target_model_schema cannot be blank when target_model_registry is 'unity_catalog'")
+
+# COMMAND ----------
+
+w = WorkspaceClient()
+try:
+    catalog = w.catalogs.get(name=target_model_catalog)
+    print(f"Catalog '{target_model_catalog}' exists.")
+except Exception as e:
+    raise ValueError(f"Error - {e}")
+
+# COMMAND ----------
+
+try:
+    schema = w.schemas.get(full_name=f"{target_model_catalog}.{target_model_schema}")
+    print(f"Schema '{target_model_catalog}.{target_model_schema}' exists.")    
+except Exception as e:
+    raise ValueError(f"Error - {e}")    
+
+# COMMAND ----------
+
+if input_dir.startswith("/Workspace"):
+    input_dir=input_dir.replace("/Workspace","file:/Workspace") 
+
+input_dir
 
 # COMMAND ----------
 
@@ -76,7 +125,7 @@ log_path
 # COMMAND ----------
 
 config.log_path=log_path
-config.export_or_import="import"
+config.target_model_registry=target_model_registry
 
 # COMMAND ----------
 

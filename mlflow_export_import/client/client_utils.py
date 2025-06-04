@@ -41,10 +41,10 @@ def create_mlflow_client():  ##birbal added. Modified version of above.
     """
     Create MLflowClient. If MLFLOW_TRACKING_URI is UC, then set MlflowClient.tracking_uri to the non-UC variant.
     """
-    export_or_import_type=config.export_or_import
+    target_model_registry=config.target_model_registry  # Birbal- this is set at Import_Registered_Models.py
 
-    if not export_or_import_type or export_or_import_type.lower() == "export":
+    if not target_model_registry or target_model_registry.lower() == "workspace_registry":
         mlflow.set_registry_uri('databricks')
-    elif export_or_import_type.lower() == "import":
+    elif target_model_registry.lower() == "unity_catalog":
         mlflow.set_registry_uri('databricks-uc')
     return mlflow.MlflowClient()
