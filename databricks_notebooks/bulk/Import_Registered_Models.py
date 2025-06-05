@@ -90,6 +90,12 @@ if not task_index.isdigit():
 
 # COMMAND ----------
 
+if target_model_registry == "workspace_registry":
+    target_model_catalog = None
+    target_model_schema = None
+
+# COMMAND ----------
+
 if target_model_registry == "unity_catalog" and (not target_model_catalog or not target_model_schema):
     raise ValueError("target_model_catalog and target_model_schema cannot be blank when target_model_registry is 'unity_catalog'")
 
@@ -138,7 +144,9 @@ import_models(
     experiment_renames = experiment_rename_file,
     import_permissions = import_permissions,
     import_source_tags = False, ## Birbal:: Do not set to True. else it will import junk mlflow tags. Setting to False WILL import all source tags by default.
-    use_threads = True
+    use_threads = True,
+    target_model_catalog = target_model_catalog, #birbal added
+    target_model_schema = target_model_schema   #birbal added
 )
 
 # COMMAND ----------

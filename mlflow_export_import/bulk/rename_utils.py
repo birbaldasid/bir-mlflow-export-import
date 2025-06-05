@@ -34,3 +34,9 @@ def get_renames(filename_or_dict):
         return filename_or_dict
     else:
         raise MlflowExportImportException(f"Unknown name replacement type '{type(filename_or_dict)}'", http_status_code=400)
+
+def build_full_model_name(catalog, schema, model_name): #birbal added
+    if model_name.count('.') == 2:
+        return model_name    
+    else:
+        return f"{catalog}.{schema}.{model_name}"        
