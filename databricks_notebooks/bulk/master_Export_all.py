@@ -71,7 +71,7 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
                 "runtime_engine": "STANDARD"
             },
             "notebook_task": {
-                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/github/bir-mlflow-export-import/databricks_notebooks/bulk/Export_All",
+                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/bir-mlflow-export-import/databricks_notebooks/bulk/Export_All",
                 "base_parameters": {
                     "output_dir": output_dir,
                     "stages": stages,
