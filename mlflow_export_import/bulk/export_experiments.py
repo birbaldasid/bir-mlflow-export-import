@@ -53,6 +53,8 @@ def export_experiments(
     _logger.info(f"max_workers iss {max_workers}")
     experiments_arg = _convert_dict_keys_to_list(experiments)
 
+    _logger.info(f"experiments_arg size is {len(experiments_arg)} and experiments_arg: {experiments_arg}") #birbal added
+
     if isinstance(experiments,str) and experiments.endswith(".txt"):
         with open(experiments, "r", encoding="utf-8") as f:
             experiments = f.read().splitlines()

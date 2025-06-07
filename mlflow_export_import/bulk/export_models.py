@@ -59,10 +59,17 @@ def export_models(
     mlflow_client = mlflow_client or create_mlflow_client()
     exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks)
     _logger.info(f"len(exps_and_runs): {len(exps_and_runs)}")
+
+    total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
+    _logger.info(f"TOTAL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
+    
     exp_ids = exps_and_runs.keys()
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
     exps_to_export = exp_ids if export_all_runs else exps_and_runs
+
+
+
     res_exps = export_experiments.export_experiments(
         mlflow_client = mlflow_client,
         experiments = exps_to_export,

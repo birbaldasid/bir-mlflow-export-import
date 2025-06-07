@@ -1,7 +1,7 @@
 from mlflow_export_import.common.iterators import SearchRegisteredModelsIterator
 from mlflow_export_import.common.iterators import SearchExperimentsIterator
 
-def _get_list(names, func_list, task_index=None, num_tasks=None):
+def _get_list(names, func_list, task_index=None, num_tasks=None): #birbal updated
     """
     Returns a list of entities specified by the 'names' filter.
     :param names: Filter of desired list of entities. Can be: "all", comma-delimited string, list of entities or trailing wildcard "*".
@@ -9,7 +9,7 @@ def _get_list(names, func_list, task_index=None, num_tasks=None):
     :return: List of entities.
     """
     if isinstance(names, str):
-        if names == "all":            
+        if names == "all":
             if task_index is None or num_tasks is None:
                 return func_list()
             else:
@@ -35,13 +35,14 @@ def get_experiment_ids(mlflow_client, experiment_ids):
 
 
 # def get_model_names(mlflow_client, model_names):
-def get_model_names(mlflow_client, model_names,task_index=None,num_tasks=None):
+def get_model_names(mlflow_client, model_names,task_index=None,num_tasks=None): #birbal updated
     def list_entities():
         return [ model.name for model in SearchRegisteredModelsIterator(mlflow_client) ]
-    return _get_list(model_names, list_entities, task_index, num_tasks)
+    return _get_list(model_names, list_entities, task_index, num_tasks) #birbal updated
 
 
-def get_subset_list(fulllist, task_index, num_tasks):    
+def get_subset_list(fulllist, task_index, num_tasks):  
+    fulllist.sort()  
     total_items = len(fulllist)
     base_size, remainder = divmod(total_items, num_tasks)
 

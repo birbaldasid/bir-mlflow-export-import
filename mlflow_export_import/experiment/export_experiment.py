@@ -123,7 +123,7 @@ def _export_run(mlflow_client, run, output_dir,
             "start_time": fmt_ts_millis(run.info.start_time),
             "run_start_time": run_start_time_str
         }
-        _logger.info(f"Not exporting run: {msg}")
+        _logger.info(f"Not exporting run: {msg} as run.info.start_time < run_start_time ") #birbal updated
         return
     is_success = export_run(
         run_id = run.info.run_id,
