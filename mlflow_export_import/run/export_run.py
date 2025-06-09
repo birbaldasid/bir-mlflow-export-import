@@ -34,7 +34,9 @@ def export_run(
         skip_download_run_artifacts = False,
         notebook_formats = None,
         raise_exception = False,
-        mlflow_client = None
+        mlflow_client = None,
+        result_queue = None, #birbal addedbirbal added
+        vr = None   #
     ):
     """
     :param run_id: Run ID.
@@ -62,7 +64,8 @@ def export_run(
             _logger.warning(f"Not exporting run '{run.info.run_id} because its lifecycle_stage is '{run.info.lifecycle_stage}'")
             return None
         experiment_id = run.info.experiment_id
-        msg = { "run_id": run.info.run_id, "lifecycle_stage": run.info.lifecycle_stage, "experiment_id": run.info.experiment_id }
+        experiment = mlflow_client.get_experiment(experiment_id)
+        msg = { "run_id": run.info.run_id, "lifecycle_stage": run.info.lifecycle_stage, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name}
         tags = run.data.tags
         tags = dict(sorted(tags.items()))
 
@@ -101,19 +104,42 @@ def export_run(
             _logger.warning(f"No notebooks to export for run '{run_id}' since tag '{MLFLOW_DATABRICKS_NOTEBOOK_PATH}' is not set.")
         dur = format_seconds(time.time()-start_time)
         _logger.info(f"Exported run in {dur}: {msg}")
+
+        if vr:
+            msg["status"] = "success" #birbal added
+            msg["model"] = vr.name  #birbal added
+            msg["version"] = vr.version #birbal added
+            msg["stage"] = vr.current_stage #birbal added
+        result_queue.put(msg) #birbal added
         return run
 
     except RestException as e:
         if raise_exception:
             raise e
         err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": e.json }
+        err_msg["model"] = vr.name  #birbal added
+        err_msg["version"] = vr.version #birbal added
+        err_msg["stage"] = vr.current_stage #birbal added
         _logger.error(f"Run export failed (1): {err_msg}")
+
+        msg["status"] = "failed" #birbal added
+        result_queue.put(err_msg) #birbal added
+
         return None
     except Exception as e:
         if raise_exception:
             raise e
         err_msg = { "run_id": run_id, "experiment_id": experiment_id, "Exception": e }
+
+        if vr:
+            err_msg["model"] = vr.name  #birbal added
+            err_msg["version"] = vr.version #birbal added
+            err_msg["stage"] = vr.current_stage #birbal added
         _logger.error(f"Run export failed (2): {err_msg}")
+
+        msg["status"] = "failed" #birbal added
+        result_queue.put(err_msg) #birbal added
+
         traceback.print_exc()
         return None
 

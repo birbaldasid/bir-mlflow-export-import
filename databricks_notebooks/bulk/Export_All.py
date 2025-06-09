@@ -22,6 +22,7 @@
 
 from mlflow_export_import.bulk import config
 import time
+import os
 
 # COMMAND ----------
 
@@ -49,6 +50,8 @@ task_index = int(dbutils.widgets.get("task_index"))
 num_tasks = int(dbutils.widgets.get("num_tasks"))
 
 run_timestamp = dbutils.widgets.get("run_timestamp")
+
+jobrunid = dbutils.widgets.get("jobrunid")
  
 if run_start_date=="": run_start_date = None
 
@@ -64,6 +67,7 @@ print("use_threads:", use_threads)
 print("task_index:", task_index)
 print("num_tasks:", num_tasks)
 print("run_timestamp:", run_timestamp)
+print("jobrunid:", jobrunid)
 
 # COMMAND ----------
 
@@ -71,7 +75,9 @@ print("run_timestamp:", run_timestamp)
 
 # COMMAND ----------
 
-output_dir = f"{output_dir}/{run_timestamp}/{task_index}"
+output_dir = os.path.join(output_dir, run_timestamp, jobrunid, str(task_index) )
+
+# output_dir = f"{output_dir}/{run_timestamp}/{task_index}"
 output_dir
 
 # COMMAND ----------

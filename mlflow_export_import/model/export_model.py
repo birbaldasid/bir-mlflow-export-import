@@ -47,7 +47,9 @@ def export_model(
         export_permissions = False,
         export_deleted_runs = False,
         notebook_formats = None,
-        mlflow_client = None
+        mlflow_client = None,
+        result_queue = None,    #birbal added
+        processed_models_versions = None #birbal added
     ):
     """
     :param model_name: Registered model name.
@@ -74,7 +76,7 @@ def export_model(
     opts = Options(stages, versions, export_latest_versions, export_deleted_runs, export_version_model, export_permissions, notebook_formats)
 
     try:
-        _export_model(mlflow_client, model_name, output_dir, opts)
+        _export_model(mlflow_client, model_name, output_dir, opts, result_queue, processed_models_versions) #birbal added result_queue
         return True, model_name
     except RestException as e:
         err_msg = { "model": model_name, "RestException": e.json  }
@@ -92,13 +94,22 @@ def export_model(
         return False, model_name
 
 
-def _export_model(mlflow_client, model_name, output_dir, opts):
+def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None, processed_models_versions = None):    #birbal added result_queue
     ori_versions = model_utils.list_model_versions(mlflow_client, model_name, opts.export_latest_versions)
+    _logger.info(f"ori_versions BEFORE filtering processed versions: {ori_versions}")   #birbal added
+    processed_versions = []
+    if processed_models_versions:
+        processed_versions = processed_models_versions.get(model_name, [])    #birbal added
+    if processed_versions:
+        ori_versions = [v for v in ori_versions if v.version not in processed_versions]     #birbal added
+    _logger.info(f"ori_versions AFTER filtering processed versions: {ori_versions}")    #birbal added
+    _logger.info(f"TOTAL MODELS VERSIONS TO EXPORT: {len(ori_versions)}") #birbal added
+
     msg = "latest" if opts.export_latest_versions else "all"
     _logger.info(f"Exporting model '{model_name}': found {len(ori_versions)} '{msg}' versions")
 
     model = model_utils.get_registered_model(mlflow_client, model_name, opts.export_permissions)
-    versions, failed_versions = _export_versions(mlflow_client, model, ori_versions, output_dir, opts)
+    versions, failed_versions = _export_versions(mlflow_client, model, ori_versions, output_dir, opts, result_queue) #birbal added result_queue
     _adjust_model(model, versions)
 
     info_attr = {
@@ -115,7 +126,7 @@ def _export_model(mlflow_client, model_name, output_dir, opts):
     _logger.info(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}'")
 
 
-def _export_versions(mlflow_client, model_dct, versions, output_dir, opts):
+def _export_versions(mlflow_client, model_dct, versions, output_dir, opts, result_queue = None):    #birbal added result_queue
     aliases = model_dct.get("aliases", [])
     version_aliases = {}
     [ version_aliases.setdefault(x["version"], []).append(x["alias"]) for x in aliases ] # map of version => its aliases
@@ -126,12 +137,12 @@ def _export_versions(mlflow_client, model_dct, versions, output_dir, opts):
             continue
         if len(opts.versions) > 0 and not vr.version in opts.versions:
             continue
-        _export_version(mlflow_client, vr, output_dir, version_aliases.get(vr.version,[]), output_versions, failed_versions, j, len(versions), opts)
+        _export_version(mlflow_client, vr, output_dir, version_aliases.get(vr.version,[]), output_versions, failed_versions, j, len(versions), opts, result_queue) #birbal added result_queue
     output_versions.sort(key=lambda x: x["version"], reverse=False)
     return output_versions, failed_versions
 
 
-def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, failed_versions, j, num_versions, opts):
+def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, failed_versions, j, num_versions, opts, result_queue = None):  #birbal added result_queue
     _output_dir = os.path.join(output_dir, vr.run_id)
     msg = { "name": vr.name, "version": vr.version, "stage": vr.current_stage, "aliases": aliases }
     _logger.info(f"Exporting model verson {j+1}/{num_versions}: {msg} to '{_output_dir}'")
@@ -148,7 +159,9 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
             export_deleted_runs = opts.export_deleted_runs,
             notebook_formats = opts.notebook_formats,
             mlflow_client = mlflow_client,
-            raise_exception = True
+            raise_exception = True,
+            result_queue = result_queue, #birbal added
+            vr = vr #birbal added
         )
         if not run and not opts.export_deleted_runs:
             failed_msg = { "message": "deleted run",  "version": vr_dct }
@@ -156,6 +169,14 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         else:
             _add_metadata_to_version(mlflow_client, vr_dct, run)
             output_versions.append(vr_dct)
+
+        # run = mlflow_client.get_run(vr.run_id)     #birbal added
+        # experiment_id = run.info.experiment_id      #birbal added
+        # experiment = mlflow_client.get_experiment(experiment_id)        #birbal added
+
+        # msg = { "model": vr.name, "version": vr.version, "stage": vr.current_stage, "aliases": aliases, "run_id": vr.run_id, "experiment_name": experiment.name }
+        # msg["status"] = "success" #birbal added
+        # result_queue.put(msg) #birbal added
 
     except RestException as e:
         err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": e.json  }
@@ -170,6 +191,9 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
             traceback.print_exc()
         failed_msg = { "version": vr_dct, "RestException": e.json  }
         failed_versions.append(failed_msg)
+
+        err_msg["status"] = "failed" #birbal added
+        # result_queue.put(err_msg) #birbal added
 
 
 def _add_metadata_to_version(mlflow_client, vr_dct, run):

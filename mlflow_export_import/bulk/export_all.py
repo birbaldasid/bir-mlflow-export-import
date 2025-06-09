@@ -25,6 +25,7 @@ from mlflow_export_import.bulk.export_models import export_models
 from mlflow_export_import.bulk.export_experiments import export_experiments
 from mlflow_export_import.bulk import bulk_utils
 from mlflow_export_import.bulk.model_utils import get_experiments_name_of_models
+from mlflow_export_import.common.checkpoint_thread import CheckpointThread #birbal added
 
 ALL_STAGES = "Production,Staging,Archived,None"
 
@@ -72,17 +73,34 @@ def export_all(
 
 
     all_exps = SearchExperimentsIterator(mlflow_client)
+    all_exps = list(set(all_exps))
     all_exp_names = [ exp.name for exp in all_exps ]
     _logger.info(f"Total all_exp_names is {len(all_exp_names)}")
+    _logger.info(f"all_exp_names is {all_exp_names}")
 
     all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
+    all_model_exp_names = list(set(all_model_exp_names))
     _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
+    _logger.info(f"all_model_exp_names is {all_model_exp_names}")
 
     remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
     _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
+    _logger.info(f"remaining_exp_names is {remaining_exp_names}")
 
-    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks)
-    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ")
+
+    output_dir_job_level=output_dir.split("/jobrunid-")[0]
+    checkpoint_dir = os.path.join(output_dir_job_level,"checkpoint", "experiments", str(task_index))
+    if os.path.exists(checkpoint_dir):
+        _logger.info(f"checkpoint_dir exists")
+        processed_experiments_run_ids = CheckpointThread.load_processed_objects(checkpoint_dir,"experiments")
+        _logger.info(f"within checkpoint processed_experiments_run_ids is {processed_experiments_run_ids}")
+        remaining_exp_names = list(set(remaining_exp_names) - set(processed_experiments_run_ids))
+        _logger.info(f"within checkpoint remaining_exp_names is {remaining_exp_names}")
+
+
+    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
+    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
+    _logger.info(f"remaining_exp_names_subset is {remaining_exp_names_subset}")
 
     res_exps = export_experiments(
         mlflow_client = mlflow_client,
@@ -92,7 +110,8 @@ def export_all(
         run_start_time = run_start_time,
         export_deleted_runs = export_deleted_runs,
         notebook_formats = notebook_formats,
-        use_threads = use_threads
+        use_threads = use_threads,
+        task_index = task_index     #birbal added
     )
     duration = round(time.time() - start_time, 1)
     info_attr = {

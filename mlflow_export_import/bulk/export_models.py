@@ -25,6 +25,8 @@ from mlflow_export_import.model.export_model import export_model
 from mlflow_export_import.bulk import export_experiments
 from mlflow_export_import.bulk.model_utils import get_experiments_runs_of_models
 from mlflow_export_import.bulk import bulk_utils
+from mlflow_export_import.common.checkpoint_thread import CheckpointThread  #birbal added
+from queue import Queue     #birbal added
 
 _logger = utils.getLogger(__name__)
 
@@ -61,12 +63,15 @@ def export_models(
     _logger.info(f"len(exps_and_runs): {len(exps_and_runs)}")
 
     total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
-    _logger.info(f"TOTAL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
+    _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
+    _logger.info(f"exps_and_runs is {exps_and_runs}")   #birbal remove it
     
     exp_ids = exps_and_runs.keys()
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
     exps_to_export = exp_ids if export_all_runs else exps_and_runs
+
+    _logger.info(f"in export_models.py...type of exps_to_export is {type(exps_to_export)} bacause export_all_runs is {export_all_runs}.....exps_to_export is {exps_to_export}") ##birbal...remove it
 
 
 
@@ -77,7 +82,8 @@ def export_models(
         export_permissions = export_permissions,
         export_deleted_runs = export_deleted_runs,
         notebook_formats = notebook_formats,
-        use_threads = use_threads
+        use_threads = use_threads,
+        task_index = task_index     #birbal added
     )
     res_models = _export_models(
         mlflow_client,
@@ -131,57 +137,89 @@ def _export_models(
     max_workers = utils.get_threads(use_threads)
     start_time = time.time()
     model_names = bulk_utils.get_model_names(mlflow_client, model_names, task_index, num_tasks)
+    _logger.info(f"TOTAL MODELS TO EXPORT: {len(model_names)}") #birbal added
     _logger.info("Models to export:")
     for model_name in model_names:
         _logger.info(f"  {model_name}")
 
     futures = []
 
-    # TODO :: Add TRY/EXCEPT block here anf in FINALLY block, persist the futures (ok_models list) to table :: Birbal///////
-    with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        for model_name in model_names:
-            dir = os.path.join(output_dir, model_name)
-            future = executor.submit(export_model,
-                model_name = model_name,
-                output_dir = dir,
-                stages = stages,
-                export_latest_versions = export_latest_versions,
-                export_version_model = export_version_model,
-                export_permissions = export_permissions,
-                export_deleted_runs = export_deleted_runs,
-                notebook_formats = notebook_formats,
-                mlflow_client = mlflow_client,
-            )
-            futures.append(future)
-    ok_models = [] ; failed_models = []
-    for future in futures:
-        result = future.result()
-        if result[0]: ok_models.append(result[1]) 
-        else: failed_models.append(result[1])
-    duration = round(time.time()-start_time, 1)
+    ######## birbal new block
+    output_dir_job_level=output_dir.split("/jobrunid-")[0]
+    checkpoint_dir = os.path.join(output_dir_job_level, "checkpoint", "models", str(task_index))
+    processed_models_versions = None
+    if os.path.exists(checkpoint_dir):
+        processed_models_versions = CheckpointThread.load_processed_objects(checkpoint_dir,"models")
+        _logger.info(f"processed_models_versions is {processed_models_versions}")
+    else:
+        os.makedirs(checkpoint_dir, exist_ok=True)
 
-    info_attr = {
-        "model_names": model_names,
-        "stages": stages,
-        "export_latest_versions": export_latest_versions,
-        "notebook_formats": notebook_formats,
-        "use_threads": use_threads,
-        "output_dir": output_dir,
-        "num_total_models": len(model_names),
-        "num_ok_models": len(ok_models),
-        "num_failed_models": len(failed_models),
-        "duration": duration,
-        "failed_models": failed_models
-    }
-    mlflow_attr = {
-        "models": ok_models,
-    }
-    io_utils.write_export_file(output_dir, "models.json", __file__, mlflow_attr, info_attr)
+    if processed_models_versions:
+        model_names = [model_name for model_name in model_names if model_name not in processed_models_versions.keys()]
 
-    _logger.info(f"{len(model_names)} models exported")
-    _logger.info(f"Duration for registered models export: {duration} seconds")
+    result_queue = Queue()
+    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir, interval=300, batch_size=50)
+    _logger.info(f"checkpoint_thread started for models")
+    checkpoint_thread.start()
+    ########
 
-    return info_attr
+    try: #birbal added
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            for model_name in model_names:
+                dir = os.path.join(output_dir, model_name)
+                future = executor.submit(export_model,
+                    model_name = model_name,
+                    output_dir = dir,
+                    stages = stages,
+                    export_latest_versions = export_latest_versions,
+                    export_version_model = export_version_model,
+                    export_permissions = export_permissions,
+                    export_deleted_runs = export_deleted_runs,
+                    notebook_formats = notebook_formats,
+                    mlflow_client = mlflow_client,
+                    result_queue = result_queue,    #birbal added
+                    processed_models_versions = processed_models_versions #birbal added
+                )
+                futures.append(future)
+        ok_models = [] ; failed_models = []
+        for future in futures:
+            result = future.result()
+            if result[0]: ok_models.append(result[1]) 
+            else: failed_models.append(result[1])
+        duration = round(time.time()-start_time, 1)
+
+        info_attr = {
+            "model_names": model_names,
+            "stages": stages,
+            "export_latest_versions": export_latest_versions,
+            "notebook_formats": notebook_formats,
+            "use_threads": use_threads,
+            "output_dir": output_dir,
+            "num_total_models": len(model_names),
+            "num_ok_models": len(ok_models),
+            "num_failed_models": len(failed_models),
+            "duration": duration,
+            "failed_models": failed_models
+        }
+        mlflow_attr = {
+            "models": ok_models,
+        }
+        io_utils.write_export_file(output_dir, "models.json", __file__, mlflow_attr, info_attr)
+
+        _logger.info(f"{len(model_names)} models exported")
+        _logger.info(f"Duration for registered models export: {duration} seconds")
+
+        return info_attr
+    
+    except Exception as e:  #birbal added
+        _logger.error(f"export_model failed: {e}")
+    
+    finally: #birbal added
+        checkpoint_thread.stop()
+        checkpoint_thread.join()
+        _logger.info("Checkpoint thread flushed and terminated for models")    
+        _logger.info(f"checkpoint_thread stopped for models")
+
 
 
 @click.command()

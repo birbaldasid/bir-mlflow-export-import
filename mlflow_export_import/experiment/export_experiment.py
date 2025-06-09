@@ -35,7 +35,8 @@ def export_experiment(
         export_deleted_runs = False,
         check_nested_runs = False,
         notebook_formats = None,
-        mlflow_client = None
+        mlflow_client = None,
+        result_queue = None #birbal added
     ):
     """
     :param: experiment_id_or_name: Experiment ID or name.
@@ -67,10 +68,12 @@ def export_experiment(
     failed_run_ids = []
     num_runs_exported = 0
     if run_ids:
+        _logger.info(f"in IFFFFFFFFFFFFFFFFFFFFFFFF ...run_ids is {run_ids} in export_experiment.py")
         runs = _get_runs(mlflow_client, run_ids, exp, failed_run_ids)
         if check_nested_runs: # ZZ
             runs = nested_runs_utils.get_nested_runs(mlflow_client, runs) # 
     else:
+        _logger.info(f"in ELSEEEEEEEEEEEEEEEEEEEE ...run_ids is {run_ids} in export_experiment.py")
         kwargs = {}
         if run_start_time:
             kwargs["filter"] = f"start_time > {run_start_time}"
@@ -81,7 +84,7 @@ def export_experiment(
 
     for run in runs:
         _export_run(mlflow_client, run, output_dir, ok_run_ids, failed_run_ids,
-            run_start_time, run_start_time_str, export_deleted_runs, notebook_formats)
+            run_start_time, run_start_time_str, export_deleted_runs, notebook_formats, result_queue)  #birbal added result_queue
         num_runs_exported += 1
 
     info_attr = {
@@ -114,7 +117,7 @@ def export_experiment(
 def _export_run(mlflow_client, run, output_dir,
         ok_run_ids, failed_run_ids,
         run_start_time, run_start_time_str,
-        export_deleted_runs, notebook_formats
+        export_deleted_runs, notebook_formats, result_queue = None #birbal added result_queue
     ):
     if run_start_time and run.info.start_time < run_start_time:
         msg = {
@@ -130,7 +133,8 @@ def _export_run(mlflow_client, run, output_dir,
         output_dir = os.path.join(output_dir, run.info.run_id),
         export_deleted_runs = export_deleted_runs,
         notebook_formats = notebook_formats,
-        mlflow_client = mlflow_client
+        mlflow_client = mlflow_client,
+        result_queue = result_queue #birbal added
     )
     if is_success:
         ok_run_ids.append(run.info.run_id)

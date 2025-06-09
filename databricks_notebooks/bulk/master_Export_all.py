@@ -56,7 +56,9 @@ DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getConte
 driver_node_type = "Standard_D4ds_v5"
 worker_node_type = "Standard_D4ds_v5"
 
-def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks):
+# def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks):
+
+def create_multi_task_job_json():
     tasks = []
     for i in range(1, int(num_tasks)+1):
         task = {
@@ -84,7 +86,9 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
                     "use_threads": use_threads,
                     "task_index": i,
                     "num_tasks": num_tasks,
-                    "run_timestamp": "{{job.start_time.iso_date}}-Export-jobid-{{job.id}}-jobrunid-{{job.run_id}}"
+                    # "run_timestamp": "{{job.start_time.iso_date}}-Export-jobid-{{job.id}}-jobrunid-{{job.run_id}}",
+                    "run_timestamp": "{{job.start_time.iso_date}}-Export-jobid-{{job.id}}",
+                    "jobrunid": "jobrunid-{{job.run_id}}"
                 }
             }
         }
@@ -99,7 +103,8 @@ def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_star
     return job_json
 
 def submit_databricks_job():
-    job_payload = create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks)
+    # job_payload = create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks)
+    job_payload = create_multi_task_job_json()
 
     headers = {
         "Authorization": f"Bearer {DATABRICKS_TOKEN}",
