@@ -10,7 +10,7 @@ _logger = utils.getLogger(__name__)
 def get_experiments_runs_of_models(client, model_names, task_index=None, num_tasks=None, show_experiments=False, show_runs=False):
     """ Get experiments and runs to to export. """
     model_names = bulk_utils.get_model_names(client, model_names, task_index, num_tasks)
-    _logger.info(f"{len(model_names)} Models:")
+    _logger.info(f"{len(model_names)} Models for task_index: {task_index}")
     for model_name in model_names:
         _logger.info(f"  {model_name}")
     exps_and_runs = {}

@@ -1,5 +1,8 @@
 from mlflow_export_import.common.iterators import SearchRegisteredModelsIterator
 from mlflow_export_import.common.iterators import SearchExperimentsIterator
+from mlflow_export_import.common import utils   #birbal added
+
+_logger = utils.getLogger(__name__)     #birbal added
 
 def _get_list(names, func_list, task_index=None, num_tasks=None): #birbal updated
     """
@@ -14,6 +17,7 @@ def _get_list(names, func_list, task_index=None, num_tasks=None): #birbal update
                 return func_list()
             else:
                 all_items=func_list()
+                _logger.info(f"TOTAL MODEL IN THE WORKSPACE REGISTRY IS {len(all_items)}")
                 return get_subset_list(all_items, task_index, num_tasks)
 
 
