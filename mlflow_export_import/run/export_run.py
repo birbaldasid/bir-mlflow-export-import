@@ -65,7 +65,8 @@ def export_run(
             return None
         experiment_id = run.info.experiment_id
         experiment = mlflow_client.get_experiment(experiment_id)
-        msg = { "run_id": run.info.run_id, "lifecycle_stage": run.info.lifecycle_stage, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name}
+        # msg = { "run_id": run.info.run_id, "lifecycle_stage": run.info.lifecycle_stage, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name}
+        msg = { "run_id": run.info.run_id, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name} #birbal removed lifecycle_stage
         tags = run.data.tags
         tags = dict(sorted(tags.items()))
 
@@ -105,8 +106,8 @@ def export_run(
         dur = format_seconds(time.time()-start_time)
         _logger.info(f"Exported run in {dur}: {msg}")
 
-        if vr:
-            msg["status"] = "success" #birbal added
+        msg["status"] = "success" #birbal added
+        if vr:            
             msg["model"] = vr.name  #birbal added
             msg["version"] = vr.version #birbal added
             msg["stage"] = vr.current_stage #birbal added
@@ -116,13 +117,14 @@ def export_run(
     except RestException as e:
         if raise_exception:
             raise e
-        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": e.json }
-        err_msg["model"] = vr.name  #birbal added
-        err_msg["version"] = vr.version #birbal added
-        err_msg["stage"] = vr.current_stage #birbal added
-        _logger.error(f"Run export failed (1): {err_msg}")
+        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": e.json }        
 
-        msg["status"] = "failed" #birbal added
+        err_msg["status"] = "failed" #birbal added
+        if vr:
+            err_msg["model"] = vr.name  #birbal added
+            err_msg["version"] = vr.version #birbal added
+            err_msg["stage"] = vr.current_stage #birbal added
+        _logger.error(f"Run export failed (1): {err_msg}")
         result_queue.put(err_msg) #birbal added
 
         return None
@@ -131,13 +133,12 @@ def export_run(
             raise e
         err_msg = { "run_id": run_id, "experiment_id": experiment_id, "Exception": e }
 
+        err_msg["status"] = "failed" #birbal added
         if vr:
             err_msg["model"] = vr.name  #birbal added
             err_msg["version"] = vr.version #birbal added
             err_msg["stage"] = vr.current_stage #birbal added
-        _logger.error(f"Run export failed (2): {err_msg}")
-
-        msg["status"] = "failed" #birbal added
+        _logger.error(f"Run export failed (2): {err_msg}")        
         result_queue.put(err_msg) #birbal added
 
         traceback.print_exc()
