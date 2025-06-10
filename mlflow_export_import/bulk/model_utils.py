@@ -28,6 +28,21 @@ def get_experiments_runs_of_models(client, model_names, task_index=None, num_tas
     return exps_and_runs
 
 
+def get_experiment_runs_dict_from_names(client, experiment_names):  #birbal added entire function
+    experiment_runs_dict = {}
+    for name in experiment_names:
+        experiment = client.get_experiment_by_name(name)
+        if experiment is not None:
+            experiment_id = experiment.experiment_id
+            runs = client.search_runs(experiment_ids=[experiment_id], max_results=1000)
+            run_ids = [run.info.run_id for run in runs]
+            experiment_runs_dict[experiment_id] = run_ids
+        else:
+            _logger.info(f"Experiment not found: {name}... in bulk->model_utils.py")
+
+    return experiment_runs_dict
+
+
 def get_experiments_name_of_models(client, model_names):
     """ Get experiments name to export. """
     model_names = bulk_utils.get_model_names(client, model_names)

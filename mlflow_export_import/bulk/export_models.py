@@ -25,7 +25,7 @@ from mlflow_export_import.model.export_model import export_model
 from mlflow_export_import.bulk import export_experiments
 from mlflow_export_import.bulk.model_utils import get_experiments_runs_of_models
 from mlflow_export_import.bulk import bulk_utils
-from mlflow_export_import.common.checkpoint_thread import CheckpointThread  #birbal added
+from mlflow_export_import.common.checkpoint_thread import CheckpointThread, filter_unprocessed_objects #birbal added
 from queue import Queue     #birbal added
 
 _logger = utils.getLogger(__name__)
@@ -43,8 +43,10 @@ def export_models(
         notebook_formats = None,
         use_threads = False,
         mlflow_client = None,
-        task_index = None,
-        num_tasks = None
+        task_index = None,  #birbal
+        num_tasks = None,   #birbal
+        checkpoint_dir_experiment = None,   #birbal
+        checkpoint_dir_model = None #birbal
     ):
     """
     :param: model_names: Can be either:
@@ -59,31 +61,39 @@ def export_models(
             model_names = f.read().splitlines()
 
     mlflow_client = mlflow_client or create_mlflow_client()
-    exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks)
+    exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks) ##birbal return dict of key=exp_id and value=list[run_id]
     _logger.info(f"len(exps_and_runs): {len(exps_and_runs)}")
 
     total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
     _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
     _logger.info(f"exps_and_runs is {exps_and_runs}")   #birbal remove it
     
-    exp_ids = exps_and_runs.keys()
+    # exp_ids = exps_and_runs.keys() #birbal commented out
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
-    exps_to_export = exp_ids if export_all_runs else exps_and_runs
+    # exps_to_export = exp_ids if export_all_runs else exps_and_runs    #birbal commented out
+    # exps_to_export = exps_and_runs    #birbal commented out
 
-    _logger.info(f"in export_models.py...type of exps_to_export is {type(exps_to_export)} bacause export_all_runs is {export_all_runs}.....exps_to_export is {exps_to_export}") ##birbal...remove it
 
+    ####Birbal block
+    _logger.info(f"in export_models..exps_and_runs BEFORE is {exps_and_runs}")
+    exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
+    _logger.info(f"in export_models..exps_and_runs AFTER is {exps_and_runs}")
 
+    ######
 
     res_exps = export_experiments.export_experiments(
         mlflow_client = mlflow_client,
-        experiments = exps_to_export,
+        # experiments = exps_to_export, #birbal commented out
+        experiments = exps_and_runs,   #birbal added
         output_dir = out_dir,
         export_permissions = export_permissions,
         export_deleted_runs = export_deleted_runs,
         notebook_formats = notebook_formats,
         use_threads = use_threads,
-        task_index = task_index     #birbal added
+        task_index = task_index,     #birbal added
+        checkpoint_dir_experiment = checkpoint_dir_experiment,   #birbal added
+        processed_experiments_run_ids = processed_experiments_run_ids
     )
     res_models = _export_models(
         mlflow_client,
@@ -96,8 +106,9 @@ def export_models(
         export_version_model = export_version_model,
         export_permissions = export_permissions,
         export_deleted_runs = export_deleted_runs,
-        task_index = task_index, 
-        num_tasks = num_tasks
+        task_index = task_index,    #birbal
+        num_tasks = num_tasks,  #birbal
+        checkpoint_dir_model = checkpoint_dir_model #birbal
     )
     duration = round(time.time()-start_time, 1)
     _logger.info(f"Duration for total registered models and versions' runs export: {duration} seconds")
@@ -132,7 +143,8 @@ def _export_models(
         export_permissions = False,
         export_deleted_runs = False,
         task_index = None, 
-        num_tasks = None
+        num_tasks = None,
+        checkpoint_dir_model = None
     ):
     max_workers = utils.get_threads(use_threads)
     start_time = time.time()
@@ -145,20 +157,13 @@ def _export_models(
     futures = []
 
     ######## birbal new block
-    output_dir_job_level=output_dir.split("/jobrunid-")[0]
-    checkpoint_dir = os.path.join(output_dir_job_level, "checkpoint", "models", str(task_index))
-    processed_models_versions = None
-    if os.path.exists(checkpoint_dir):
-        processed_models_versions = CheckpointThread.load_processed_objects(checkpoint_dir,"models")
-        _logger.info(f"processed_models_versions is {processed_models_versions}")
-    else:
-        os.makedirs(checkpoint_dir, exist_ok=True)
-
-    if processed_models_versions:
-        model_names = [model_name for model_name in model_names if model_name not in processed_models_versions.keys()]
+    _logger.info(f"model_names BEFORE filter_unprocessded_objects call is {model_names}")
+    model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
+    _logger.info(f"model_names AFTER filter_unprocessded_objects call is {model_names}")
+    _logger.info(f"processed_models_versions AFTER filter_unprocessded_objects call is {processed_models_versions}")
 
     result_queue = Queue()
-    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir, interval=300, batch_size=50)
+    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=50)
     _logger.info(f"checkpoint_thread started for models")
     checkpoint_thread.start()
     ########

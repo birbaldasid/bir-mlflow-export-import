@@ -38,7 +38,9 @@ def export_experiments(
         notebook_formats = None,
         use_threads = False,
         mlflow_client = None,
-        task_index = None   #birbal added
+        task_index = None,   #birbal added
+        checkpoint_dir_experiment = None,   #birbal added
+        processed_experiments_run_ids = None #birbal added
     ):
     """
     :param experiments: Can be either:
@@ -54,7 +56,8 @@ def export_experiments(
     start_time = time.time()
     max_workers = utils.get_threads(use_threads)
     _logger.info(f"max_workers iss {max_workers}")
-    experiments_arg = _convert_dict_keys_to_list(experiments)
+    # experiments_arg = _convert_dict_keys_to_list(experiments)     #birbal commentec out
+    experiments_arg = _convert_dict_keys_to_list(experiments.keys())     #birbal added
 
     _logger.info(f"experiments_arg size is {len(experiments_arg)} and experiments_arg: {experiments_arg}") #birbal added
 
@@ -88,24 +91,8 @@ def export_experiments(
 
 
     ######## birbal new block
-    _logger.info(f"experiments BEFORE isssssssssss {experiments}")
-    output_dir_job_level=output_dir.split("/jobrunid-")[0]
-    checkpoint_dir = os.path.join(output_dir_job_level,"checkpoint", "experiments", str(task_index))
-    processed_experiments_run_ids = None
-
-    if os.path.exists(checkpoint_dir):
-        processed_experiments_run_ids = CheckpointThread.load_processed_objects(checkpoint_dir,"experiments")
-        _logger.info(f"processed_experiments_run_ids is {processed_experiments_run_ids}")
-    else:
-        os.makedirs(checkpoint_dir, exist_ok=True)
-
-    if processed_experiments_run_ids:
-        experiments = [exp_id for exp_id in experiments if exp_id not in processed_experiments_run_ids.keys()]
-
-    
-    _logger.info(f"experiments AFTER isssssssssss{experiments} and type is {type(experiments)}")
     result_queue = Queue()
-    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir, interval=30, batch_size=100)
+    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_experiment, interval=30, batch_size=100)
     _logger.info(f"checkpoint_thread started for experiments")
     checkpoint_thread.start()
     ########

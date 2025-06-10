@@ -12,7 +12,7 @@ spark = SparkSession.builder.getOrCreate()
 
 _logger = utils.getLogger(__name__)
 
-class CheckpointThread(threading.Thread):
+class CheckpointThread(threading.Thread):   #birbal added 
     def __init__(self, queue, checkpoint_dir, interval=60, batch_size=30):
         super().__init__()
         self.queue = queue
@@ -43,30 +43,11 @@ class CheckpointThread(threading.Thread):
             self.flush_to_delta()
 
     def flush_to_delta(self):
-        # _logger.info(f"flush_to_delta called.....................")
-        # if not self._buffer:
-        #     _logger.info(f"_buffer is empty ... returning from flush_to_delta")
-        #     return
-        # timestamp = int(time.time())
-        # try:
-        #     df = spark.createDataFrame(self._buffer)
-        #     _logger.info("dataframe izzzzzzzzz...............")
-        #     df.show()
-        #     df.write.format("delta").mode("append").option("mergeSchema", "true").save(self.checkpoint_dir)
-        #     _logger.info(f"[Checkpoint] Saved {len(self._buffer)} records to {self.checkpoint_dir}")
-        # except Exception as e:
-        #     _logger.error(f"[Checkpoint] Failed to write to {self.checkpoint_dir}: {e}")  #birbal. Better to throw exception and fail????
-
-
-
         try:
             df = pd.DataFrame(self._buffer)
             if df.empty:
                 _logger.info(f"[Checkpoint] 🟡 DataFrame is empty. Skipping write to {self.checkpoint_dir}")
                 return
-            
-            # if not os.path.exists(self.checkpoint_dir):
-            #     os.makedirs(self.checkpoint_dir, exist_ok=True)                
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.checkpoint_dir, f"checkpoint_{timestamp}.parquet")
@@ -79,30 +60,9 @@ class CheckpointThread(threading.Thread):
     def stop(self):        
         self._stop_event.set()
         _logger.info("STOP event called..........")
-        # self.flush_to_delta()   ## Need to remove ????????????
 
     @staticmethod
     def load_processed_objects(checkpoint_dir, object_type= None):
-        # try:
-        #     df = spark.read.format("delta").load(checkpoint_dir)
-        #     result_dict ={}
-
-        #     if object_type == "experiments":
-        #         grouped_df = df.groupBy("experiment_id").agg(collect_list("run_id").alias("run_ids"))
-        #         result_dict = {row["experiment_id"]: row["run_ids"] for row in grouped_df.collect()}
-        #         _logger.info(f"result_dict is {result_dict}")
-            
-        #     if object_type == "models":
-        #         grouped_df = df.groupBy("model").agg(collect_list("version").alias("versions"))
-        #         result_dict = {row["model"]: row["versions"] for row in grouped_df.collect()}
-        #         _logger.info(f"result_dict is {result_dict}")
-            
-        #     return result_dict
-        
-        # except Exception as e:
-        #     _logger.warning(f"[Checkpoint] No valid Delta checkpoint data found or failed to load: {e}")
-        #     return {}
-
         try:
             dataset = ds.dataset(checkpoint_dir, format="parquet")
             df = dataset.to_table().to_pandas()
@@ -113,15 +73,29 @@ class CheckpointThread(threading.Thread):
                 return {}
 
             if object_type == "experiments":
-                result_dict = df.groupby("experiment_id")["run_id"].apply(list).to_dict()
-                # _logger.info(f"result_dict is {result_dict}")
+                result_dict = df.groupby("experiment_id")["run_id"].apply(lambda x: list(set(x))).to_dict()                              
 
             if object_type == "models":
-                result_dict = df.groupby("model")["version"].apply(list).to_dict()
-                _logger.info(f"result_dict is {result_dict}")
+                result_dict = df.groupby("model")["version"].apply(lambda x: list(set(x))).to_dict()   
                 
             return result_dict
 
         except Exception as e:
             _logger.warning(f"[Checkpoint] Failed to load checkpoint data from {checkpoint_dir}: {e}", exc_info=True)
-            return {}
+            return None
+
+def filter_unprocessed_objects(checkpoint_dir,object_type,to_be_processed_objects):       #birbal added         
+        processed_objects = CheckpointThread.load_processed_objects(checkpoint_dir,object_type)
+        if isinstance(to_be_processed_objects, dict):   
+            _logger.info(f"filter_unprocessded_objects invoked for dict")
+            unprocessed_objects = {k: v for k, v in to_be_processed_objects.items() if k not in processed_objects}
+            return unprocessed_objects, processed_objects
+        
+        if isinstance(to_be_processed_objects, list):   
+            _logger.info(f"filter_unprocessded_objects invoked for list")
+            unprocessed_objects = list(set(to_be_processed_objects) - set(processed_objects.keys()))
+            return unprocessed_objects, processed_objects
+        
+        return None,None
+              
+             

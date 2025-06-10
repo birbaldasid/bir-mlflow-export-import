@@ -71,13 +71,27 @@ print("jobrunid:", jobrunid)
 
 # COMMAND ----------
 
-# assert_widget(output_dir, "1. Output directory")
+checkpoint_dir_experiment = os.path.join(output_dir, run_timestamp,"checkpoint", "experiments")
+try:
+    if not os.path.exists(checkpoint_dir_experiment):
+        os.makedirs(checkpoint_dir_experiment, exist_ok=True)
+        print(f"checkpoint_dir_experiment: created {checkpoint_dir_experiment}")
+except Exception as e:
+    raise Exception(f"Failed to create directory {checkpoint_dir_experiment}: {e}")
 
 # COMMAND ----------
 
-output_dir = os.path.join(output_dir, run_timestamp, jobrunid, str(task_index) )
+checkpoint_dir_model = os.path.join(output_dir, run_timestamp,"checkpoint", "models")
+try:
+    if not os.path.exists(checkpoint_dir_model):
+        os.makedirs(checkpoint_dir_model, exist_ok=True)
+        print(f"checkpoint_dir_model: created {checkpoint_dir_model}")
+except Exception as e:
+    raise Exception(f"Failed to create directory {checkpoint_dir_model}: {e}")
 
-# output_dir = f"{output_dir}/{run_timestamp}/{task_index}"
+# COMMAND ----------
+
+output_dir = os.path.join(output_dir, run_timestamp, jobrunid, str(task_index))
 output_dir
 
 # COMMAND ----------
@@ -89,6 +103,10 @@ log_path
 
 config.log_path=log_path
 config.export_or_import="export"
+
+# COMMAND ----------
+
+
 
 # COMMAND ----------
 
@@ -105,7 +123,9 @@ export_all(
     notebook_formats = notebook_formats, 
     use_threads = use_threads,
     task_index = task_index,
-    num_tasks = num_tasks
+    num_tasks = num_tasks,
+    checkpoint_dir_experiment = checkpoint_dir_experiment,
+    checkpoint_dir_model = checkpoint_dir_model
 )
 
 # COMMAND ----------

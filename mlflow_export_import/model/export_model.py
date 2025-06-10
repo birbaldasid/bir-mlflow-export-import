@@ -170,14 +170,6 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
             _add_metadata_to_version(mlflow_client, vr_dct, run)
             output_versions.append(vr_dct)
 
-        # run = mlflow_client.get_run(vr.run_id)     #birbal added
-        # experiment_id = run.info.experiment_id      #birbal added
-        # experiment = mlflow_client.get_experiment(experiment_id)        #birbal added
-
-        # msg = { "model": vr.name, "version": vr.version, "stage": vr.current_stage, "aliases": aliases, "run_id": vr.run_id, "experiment_name": experiment.name }
-        # msg["status"] = "success" #birbal added
-        # result_queue.put(msg) #birbal added
-
     except RestException as e:
         err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": e.json  }
         if e.json.get("error_code") == "RESOURCE_DOES_NOT_EXIST":
