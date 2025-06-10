@@ -25,7 +25,6 @@ class CheckpointThread(threading.Thread):   #birbal added
 
     def run(self):
         while not self._stop_event.is_set() or not self.queue.empty():
-            # logger.info(f"queue NOT empty")
             try:
                 item = self.queue.get(timeout=1)
                 self._buffer.append(item)
@@ -46,16 +45,16 @@ class CheckpointThread(threading.Thread):   #birbal added
         try:
             df = pd.DataFrame(self._buffer)
             if df.empty:
-                _logger.info(f"[Checkpoint] 🟡 DataFrame is empty. Skipping write to {self.checkpoint_dir}")
+                _logger.info(f"[Checkpoint] DataFrame is empty. Skipping write to {self.checkpoint_dir}")
                 return
 
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.checkpoint_dir, f"checkpoint_{timestamp}.parquet")
             df.to_parquet(file_path, index=False)
-            _logger.info(f"[Checkpoint] ✅ Saved {len(df)} records to {file_path}")
+            _logger.info(f"[Checkpoint] Saved {len(df)} records to {file_path}")
             
         except Exception as e:
-            _logger.error(f"[Checkpoint] ❌ Failed to write to {self.checkpoint_dir}: {e}", exc_info=True)
+            _logger.error(f"[Checkpoint] Failed to write to {self.checkpoint_dir}: {e}", exc_info=True)
 
     def stop(self):        
         self._stop_event.set()

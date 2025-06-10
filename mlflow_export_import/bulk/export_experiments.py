@@ -82,8 +82,6 @@ def export_experiments(
             table_data.append(["Total",num_runs])
             columns = ["Experiment ID", "# Runs"]
     utils.show_table("Experiments",table_data,columns)
-    _logger.info("")
-
 
     ######## birbal new block
     result_queue = Queue()
@@ -177,8 +175,7 @@ def export_experiments(
     finally: #birbal added
         checkpoint_thread.stop()
         checkpoint_thread.join()
-        _logger.info("Checkpoint thread flushed and terminated for experiments")    
-        _logger.info(f"checkpoint_thread stopped for experiments")
+        _logger.info("Checkpoint thread flushed and terminated for experiments") 
 
 
 def _export_experiment(mlflow_client, exp_id_or_name, output_dir, export_permissions, notebook_formats, export_results,

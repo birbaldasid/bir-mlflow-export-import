@@ -67,12 +67,8 @@ def export_models(
     total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
     _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
     
-    # exp_ids = exps_and_runs.keys() #birbal commented out
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
-    # exps_to_export = exp_ids if export_all_runs else exps_and_runs    #birbal commented out
-    # exps_to_export = exps_and_runs    #birbal commented out
-
 
     ####Birbal block
     exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
@@ -215,9 +211,7 @@ def _export_models(
     finally: #birbal added
         checkpoint_thread.stop()
         checkpoint_thread.join()
-        _logger.info("Checkpoint thread flushed and terminated for models")    
-        _logger.info(f"checkpoint_thread stopped for models")
-
+        _logger.info("Checkpoint thread flushed and terminated for models")
 
 
 @click.command()
