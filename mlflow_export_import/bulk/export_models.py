@@ -66,7 +66,6 @@ def export_models(
 
     total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
     _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
-    _logger.info(f"exps_and_runs is {exps_and_runs}")   #birbal remove it
     
     # exp_ids = exps_and_runs.keys() #birbal commented out
     start_time = time.time()
@@ -76,9 +75,7 @@ def export_models(
 
 
     ####Birbal block
-    _logger.info(f"in export_models..exps_and_runs BEFORE is {exps_and_runs}")
     exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
-    _logger.info(f"in export_models..exps_and_runs AFTER is {exps_and_runs}")
 
     ######
 
@@ -157,11 +154,7 @@ def _export_models(
     futures = []
 
     ######## birbal new block
-    _logger.info(f"model_names BEFORE filter_unprocessded_objects call is {model_names}")
     model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
-    _logger.info(f"model_names AFTER filter_unprocessded_objects call is {model_names}")
-    _logger.info(f"processed_models_versions AFTER filter_unprocessded_objects call is {processed_models_versions}")
-
     result_queue = Queue()
     checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=50)
     _logger.info(f"checkpoint_thread started for models")

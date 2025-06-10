@@ -96,13 +96,11 @@ def export_model(
 
 def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None, processed_models_versions = None):    #birbal added result_queue
     ori_versions = model_utils.list_model_versions(mlflow_client, model_name, opts.export_latest_versions)
-    _logger.info(f"ori_versions BEFORE filtering processed versions: {ori_versions}")   #birbal added
     processed_versions = []
     if processed_models_versions:
         processed_versions = processed_models_versions.get(model_name, [])    #birbal added
     if processed_versions:
         ori_versions = [v for v in ori_versions if v.version not in processed_versions]     #birbal added
-    _logger.info(f"ori_versions AFTER filtering processed versions: {ori_versions}")    #birbal added
     _logger.info(f"TOTAL MODELS VERSIONS TO EXPORT: {len(ori_versions)}") #birbal added
 
     msg = "latest" if opts.export_latest_versions else "all"
@@ -185,8 +183,6 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         failed_versions.append(failed_msg)
 
         err_msg["status"] = "failed" #birbal added
-        # result_queue.put(err_msg) #birbal added
-
 
 def _add_metadata_to_version(mlflow_client, vr_dct, run):
     vr_dct["_run_artifact_uri"] = run.info.artifact_uri

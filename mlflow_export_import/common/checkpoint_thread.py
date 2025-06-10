@@ -87,12 +87,10 @@ class CheckpointThread(threading.Thread):   #birbal added
 def filter_unprocessed_objects(checkpoint_dir,object_type,to_be_processed_objects):       #birbal added         
         processed_objects = CheckpointThread.load_processed_objects(checkpoint_dir,object_type)
         if isinstance(to_be_processed_objects, dict):   
-            _logger.info(f"filter_unprocessded_objects invoked for dict")
             unprocessed_objects = {k: v for k, v in to_be_processed_objects.items() if k not in processed_objects}
             return unprocessed_objects, processed_objects
         
         if isinstance(to_be_processed_objects, list):   
-            _logger.info(f"filter_unprocessded_objects invoked for list")
             unprocessed_objects = list(set(to_be_processed_objects) - set(processed_objects.keys()))
             return unprocessed_objects, processed_objects
         

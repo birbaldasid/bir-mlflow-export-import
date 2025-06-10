@@ -59,8 +59,6 @@ def export_experiments(
     # experiments_arg = _convert_dict_keys_to_list(experiments)     #birbal commentec out
     experiments_arg = _convert_dict_keys_to_list(experiments.keys())     #birbal added
 
-    _logger.info(f"experiments_arg size is {len(experiments_arg)} and experiments_arg: {experiments_arg}") #birbal added
-
     if isinstance(experiments,str) and experiments.endswith(".txt"):
         with open(experiments, "r", encoding="utf-8") as f:
             experiments = f.read().splitlines()
@@ -71,15 +69,12 @@ def export_experiments(
         export_all_runs = not isinstance(experiments, dict)
         experiments = bulk_utils.get_experiment_ids(mlflow_client, experiments)
         _logger.info(f"Total model experiments to export: {len(experiments)}") #birbal added
-        _logger.info(f"export_all_runs should be TRUE is {export_all_runs}") ## birbal should be TRUE
 
         if export_all_runs:
-            _logger.info("in IFFFFFFFF...export_all_runs is true")
             table_data = experiments
             columns = ["Experiment Name or ID"]
             experiments_dct = {}
         else:
-            _logger.info("in ELSEEEE... export_all_runs is false")
             experiments_dct = experiments # we passed in a dict
             experiments = experiments.keys()
             table_data = [ [exp_id,len(runs)] for exp_id,runs in experiments_dct.items() ]
@@ -106,11 +101,9 @@ def export_experiments(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for exp_id_or_name in experiments:
                 run_ids = experiments_dct.get(exp_id_or_name, [])
-                _logger.info(f"run_ids is {run_ids}.... in export_experiments.py...line 122")
                 if processed_experiments_run_ids:
                     processed_run_ids = processed_experiments_run_ids.get(exp_id_or_name, []) #birbal added
                     run_ids = list(set(run_ids) - set(processed_run_ids))  #birbal added
-                    _logger.info(f"run_ids excluding the processed ones are {run_ids}") #birbal added
                 future = executor.submit(_export_experiment,
                     mlflow_client,
                     exp_id_or_name,
