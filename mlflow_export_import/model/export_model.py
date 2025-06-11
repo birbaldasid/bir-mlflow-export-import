@@ -86,9 +86,13 @@ def export_model(
             _logger.error({**{"message": "Model cannot be exported"}, **err_msg})
             import traceback
             traceback.print_exc()
+        err_msg["status"] = "failed"     #birbal added        
+        result_queue.put(err_msg)  #birbal added
         return False, model_name
     except Exception as e:
         _logger.error({ "model": model_name, "Exception": e })
+        err_msg = { "model": model_name, "status": "failed","Exception": e  }     #birbal added        
+        result_queue.put(err_msg)  #birbal added
         import traceback
         traceback.print_exc()
         return False, model_name
@@ -183,6 +187,13 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         failed_versions.append(failed_msg)
 
         err_msg["status"] = "failed" #birbal added
+        result_queue.put(err_msg)   #birbal added
+    
+    except Exception as e:   
+        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  } 
+        result_queue.put(err_msg)   #birbal added
+        
+
 
 def _add_metadata_to_version(mlflow_client, vr_dct, run):
     vr_dct["_run_artifact_uri"] = run.info.artifact_uri

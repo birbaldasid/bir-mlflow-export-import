@@ -213,12 +213,20 @@ def _export_experiment(mlflow_client, exp_id_or_name, output_dir, export_permiss
         mlflow_utils.dump_exception(e)
         err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(e) }
         _logger.error(err_msg)
+        err_msg["status"] = "failed"    #birbal added
+        result_queue.put(err_msg)   #birbal added
     except MlflowExportImportException as e:
         err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": e.kwargs }
         _logger.error(err_msg)
+
+        err_msg["status"] = "failed"    #birbal added
+        result_queue.put(err_msg)   #birbal added
     except Exception as e:
         err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": e }
         _logger.error(err_msg)
+        
+        err_msg["status"] = "failed"    #birbal added
+        result_queue.put(err_msg)   #birbal added
 
 
     # TODO: Finally block to persist experiments ::: Birbal////////     

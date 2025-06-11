@@ -26,7 +26,7 @@ class CheckpointThread(threading.Thread):   #birbal added
     def run(self):
         while not self._stop_event.is_set() or not self.queue.empty():
             try:
-                item = self.queue.get(timeout=1)
+                item = self.queue.get(timeout=5)
                 self._buffer.append(item)
             except:
                 pass  # No item fetched
@@ -40,6 +40,7 @@ class CheckpointThread(threading.Thread):   #birbal added
         # Final flush
         if self._buffer:
             self.flush_to_delta()
+            self._buffer.clear()
 
     def flush_to_delta(self):
         try:
