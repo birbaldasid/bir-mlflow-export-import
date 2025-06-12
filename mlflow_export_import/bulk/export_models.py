@@ -152,7 +152,7 @@ def _export_models(
     ######## birbal new block
     model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
     result_queue = Queue()
-    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=50)
+    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=100)
     _logger.info(f"checkpoint_thread started for models")
     checkpoint_thread.start()
     ########

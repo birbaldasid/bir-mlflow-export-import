@@ -117,7 +117,8 @@ def export_run(
     except RestException as e:
         if raise_exception:
             raise e
-        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": e.json }        
+        # err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": e.json }       #birbal commented out
+        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "RestException": str(e.json) }        #birbal string casted  
 
         err_msg["status"] = "failed" #birbal added
         if vr:
@@ -131,7 +132,8 @@ def export_run(
     except Exception as e:
         if raise_exception:
             raise e
-        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "Exception": e }
+        # err_msg = { "run_id": run_id, "experiment_id": experiment_id, "Exception": e }    #birbal commented out
+        err_msg = { "run_id": run_id, "experiment_id": experiment_id, "Exception": str(e) }     #birbal string casted
 
         err_msg["status"] = "failed" #birbal added
         if vr:

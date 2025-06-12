@@ -59,7 +59,7 @@ class CheckpointThread(threading.Thread):   #birbal added
                     self._buffer.append(item)
                     drain_count += 1
                     if drain_count < max_drain_batch:   
-                        _logger.debug(f" drain_count < max_drain_batch is TRUEEEEEEE")                     
+                        _logger.info(f" drain_count < max_drain_batch is TRUEEEEEEE")                     
                         items_fetched = True
                         break
                     
@@ -67,12 +67,12 @@ class CheckpointThread(threading.Thread):   #birbal added
                 pass  # Queue is empty or bounded
 
             if items_fetched:
-                _logger.debug(f"[Checkpoint] Fetched {drain_count} items from queue.")
+                _logger.info(f"[Checkpoint] Fetched {drain_count} items from queue.")
 
             time_since_last_flush = time.time() - self._last_flush_time
-            _logger.debug(f"time_since_last_flush issss {time_since_last_flush}")
+            # _logger.debug(f"time_since_last_flush issss {time_since_last_flush}")
             if len(self._buffer) >= self.batch_size or time_since_last_flush >= self.interval:
-                _logger.debug(f"ready to flush to delta")
+                _logger.info(f"ready to flush to delta")
                 self.flush_to_delta()
                 self._buffer.clear()
                 self._last_flush_time = time.time()
@@ -85,7 +85,7 @@ class CheckpointThread(threading.Thread):   #birbal added
 
 
     def flush_to_delta(self):
-        _logger.debug(f"flush_to_delta calledddddd")
+        _logger.info(f"flush_to_delta calledddddd")
         try:
             df = pd.DataFrame(self._buffer)
             if df.empty:
@@ -95,7 +95,7 @@ class CheckpointThread(threading.Thread):   #birbal added
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.checkpoint_dir, f"checkpoint_{timestamp}.parquet")
             df.to_parquet(file_path, index=False)
-            _logger.info(f"[Checkpoint] Saved {len(df)} records to {file_path}")
+            _logger.info(f"[Checkpoint] Saved len(df) {len(df)} records to {file_path}...len(self._buffer) is {len(self._buffer)}...data in buffer is {self._buffer}.... data in dataframe is {df}")
             
         except Exception as e:
             _logger.error(f"[Checkpoint] Failed to write to {self.checkpoint_dir}: {e}", exc_info=True)

@@ -79,7 +79,8 @@ def export_model(
         _export_model(mlflow_client, model_name, output_dir, opts, result_queue, processed_models_versions) #birbal added result_queue
         return True, model_name
     except RestException as e:
-        err_msg = { "model": model_name, "RestException": e.json  }
+        # err_msg = { "model": model_name, "RestException": e.json  }       #birbal commented out
+        err_msg = { "model": model_name, "RestException": str(e.json)  }    #birbal string casted
         if e.json.get("error_code") == "RESOURCE_DOES_NOT_EXIST":
             _logger.error({ **{"message": "Model does not exist"}, **err_msg})
         else:
@@ -91,7 +92,8 @@ def export_model(
         return False, model_name
     except Exception as e:
         _logger.error({ "model": model_name, "Exception": e })
-        err_msg = { "model": model_name, "status": "failed","Exception": e  }     #birbal added        
+        # err_msg = { "model": model_name, "status": "failed","Exception": e  }     #birbal commented out added    
+        err_msg = { "model": model_name, "status": "failed","Exception": str(e)  }   #birbal string casted        
         result_queue.put(err_msg)  #birbal added
         import traceback
         traceback.print_exc()
@@ -173,7 +175,8 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
             output_versions.append(vr_dct)
 
     except RestException as e:
-        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": e.json  }
+        # err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": e.json  }  #birbal commented out
+        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": str(e.json)  }    #birbal string casted
         if e.json.get("error_code") == "RESOURCE_DOES_NOT_EXIST":
             err_msg = { **{"message": "Version run probably does not exist"}, **err_msg}
             _logger.error(f"Version export failed (1): {err_msg}")
@@ -190,7 +193,8 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         result_queue.put(err_msg)   #birbal added
     
     except Exception as e:   
-        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  }  #birbal added
+        # err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  }  #birbal commented out
+        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": str(e)  }  #birbal string casted
         result_queue.put(err_msg)   #birbal added
         
 

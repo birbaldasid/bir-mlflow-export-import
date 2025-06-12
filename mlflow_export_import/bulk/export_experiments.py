@@ -85,7 +85,7 @@ def export_experiments(
 
     ######## birbal new block
     result_queue = Queue()
-    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_experiment, interval=30, batch_size=100)
+    checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_experiment, interval=300, batch_size=100)
     _logger.info(f"checkpoint_thread started for experiments")
     checkpoint_thread.start()
     ########
@@ -211,18 +211,21 @@ def _export_experiment(mlflow_client, exp_id_or_name, output_dir, export_permiss
 
     except RestException as e:
         mlflow_utils.dump_exception(e)
-        err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(e) }
+        # err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(e) }    #birbal commented out
+        err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(str(e)) } #birbal type casted
         _logger.error(err_msg)
         err_msg["status"] = "failed"    #birbal added
         result_queue.put(err_msg)   #birbal added
     except MlflowExportImportException as e:
-        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": e.kwargs }
+        # err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": e.kwargs }  #birbal commented out
+        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": str(e.kwargs) }    #birbal string casted
         _logger.error(err_msg)
 
         err_msg["status"] = "failed"    #birbal added
         result_queue.put(err_msg)   #birbal added
     except Exception as e:
-        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": e }
+        # err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": e }    #birbal commented out
+        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": str(e) }    #birbal string casted
         _logger.error(err_msg)
         
         err_msg["status"] = "failed"    #birbal added
