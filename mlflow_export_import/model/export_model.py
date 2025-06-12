@@ -190,7 +190,7 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         result_queue.put(err_msg)   #birbal added
     
     except Exception as e:   
-        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  } 
+        err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  }  #birbal added
         result_queue.put(err_msg)   #birbal added
         
 

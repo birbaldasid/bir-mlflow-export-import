@@ -52,26 +52,26 @@ def export_all(
     mlflow_client = mlflow_client or create_mlflow_client()
 
     ###birbal moved this block here to get the count
-    all_exps = SearchExperimentsIterator(mlflow_client)
-    all_exps = list(set(all_exps))
-    all_exp_names = [ exp.name for exp in all_exps ]
-    _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
+    # all_exps = SearchExperimentsIterator(mlflow_client)
+    # all_exps = list(set(all_exps))
+    # all_exp_names = [ exp.name for exp in all_exps ]
+    # _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
 
-    all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
-    all_model_exp_names = list(set(all_model_exp_names))
-    _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
+    # all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
+    # all_model_exp_names = list(set(all_model_exp_names))
+    # _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
 
-    remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
-    _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
+    # remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
+    # _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
 
-    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
-    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
+    # remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
+    # _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
 
-    exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
+    # exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
 
-    _logger.info(f"exps_and_runs count BEFORE filter_unprocessed_objects is {len(exps_and_runs)}")
-    exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)  
-    _logger.info(f"exps_and_runs count AFTER filter_unprocessed_objects is {len(exps_and_runs)}")
+    # _logger.info(f"exps_and_runs count BEFORE filter_unprocessed_objects is {len(exps_and_runs)}")
+    # exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)  
+    # _logger.info(f"exps_and_runs count AFTER filter_unprocessed_objects is {len(exps_and_runs)}")
     ##########
 
 
@@ -95,25 +95,25 @@ def export_all(
 
     )
 
-    # all_exps = SearchExperimentsIterator(mlflow_client)
-    # all_exps = list(set(all_exps))
-    # all_exp_names = [ exp.name for exp in all_exps ]
-    # _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
+    all_exps = SearchExperimentsIterator(mlflow_client)
+    all_exps = list(set(all_exps))
+    all_exp_names = [ exp.name for exp in all_exps ]
+    _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
 
-    # all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
-    # all_model_exp_names = list(set(all_model_exp_names))
-    # _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
+    all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
+    all_model_exp_names = list(set(all_model_exp_names))
+    _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
 
-    # remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
-    # _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
+    remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
+    _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
 
 
-    # remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
-    # _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
+    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
+    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
 
-    # exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
+    exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
 
-    # exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)    
+    exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)    
 
     res_exps = export_experiments(
         mlflow_client = mlflow_client,

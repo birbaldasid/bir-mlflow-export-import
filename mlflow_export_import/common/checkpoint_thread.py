@@ -13,7 +13,7 @@ spark = SparkSession.builder.getOrCreate()
 _logger = utils.getLogger(__name__)
 
 class CheckpointThread(threading.Thread):   #birbal added 
-    def __init__(self, queue, checkpoint_dir, interval=60, batch_size=30):
+    def __init__(self, queue, checkpoint_dir, interval=300, batch_size=100):
         super().__init__()
         self.queue = queue
         self.checkpoint_dir = checkpoint_dir
@@ -23,16 +23,56 @@ class CheckpointThread(threading.Thread):   #birbal added
         self._buffer = []
         self._last_flush_time = time.time()
 
+    # def run(self):
+    #     while not self._stop_event.is_set() or not self.queue.empty():
+    #         try:
+    #             item = self.queue.get(timeout=5)
+    #             self._buffer.append(item)
+    #         except Exception as e:
+    #             _logger.warning(f"[Checkpoint] Failed to fetch item from queue: {e}", exc_info=True)
+    #             pass  # No item fetched
+
+    #         time_since_last_flush = time.time() - self._last_flush_time
+    #         if len(self._buffer) >= self.batch_size or time_since_last_flush >= self.interval:
+    #             self.flush_to_delta()
+    #             self._buffer.clear()
+    #             self._last_flush_time = time.time()
+
+    #     # Final flush
+    #     if self._buffer:
+    #         self.flush_to_delta()
+    #         self._buffer.clear()
+
+
     def run(self):
+        max_drain_batch = 50  # Max items to pull per loop iteration
         while not self._stop_event.is_set() or not self.queue.empty():
+            items_fetched = False
+            drain_count = 0
+
             try:
-                item = self.queue.get(timeout=5)
-                self._buffer.append(item)
-            except:
-                pass  # No item fetched
+                # while drain_count < max_drain_batch:
+                while not self.queue.empty():
+                    _logger.debug(f"drain_count isssssssssss {drain_count} and buffer len is {len(self._buffer)}")
+                    # item = self.queue.get_nowait()
+                    item = self.queue.get()
+                    self._buffer.append(item)
+                    drain_count += 1
+                    if drain_count < max_drain_batch:   
+                        _logger.debug(f" drain_count < max_drain_batch is TRUEEEEEEE")                     
+                        items_fetched = True
+                        break
+                    
+            except Exception:
+                pass  # Queue is empty or bounded
+
+            if items_fetched:
+                _logger.debug(f"[Checkpoint] Fetched {drain_count} items from queue.")
 
             time_since_last_flush = time.time() - self._last_flush_time
+            _logger.debug(f"time_since_last_flush issss {time_since_last_flush}")
             if len(self._buffer) >= self.batch_size or time_since_last_flush >= self.interval:
+                _logger.debug(f"ready to flush to delta")
                 self.flush_to_delta()
                 self._buffer.clear()
                 self._last_flush_time = time.time()
@@ -42,7 +82,10 @@ class CheckpointThread(threading.Thread):   #birbal added
             self.flush_to_delta()
             self._buffer.clear()
 
+
+
     def flush_to_delta(self):
+        _logger.debug(f"flush_to_delta calledddddd")
         try:
             df = pd.DataFrame(self._buffer)
             if df.empty:
