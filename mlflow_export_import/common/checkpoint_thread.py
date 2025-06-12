@@ -58,8 +58,8 @@ class CheckpointThread(threading.Thread):   #birbal added
                     item = self.queue.get()
                     self._buffer.append(item)
                     drain_count += 1
-                    if drain_count < max_drain_batch:   
-                        _logger.info(f" drain_count < max_drain_batch is TRUEEEEEEE")                     
+                    if drain_count > max_drain_batch:   
+                        _logger.info(f" drain_count > max_drain_batch is TRUEEEEEEE")                     
                         items_fetched = True
                         break
                     

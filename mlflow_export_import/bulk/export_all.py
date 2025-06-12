@@ -95,58 +95,58 @@ def export_all(
 
     )
 
-    all_exps = SearchExperimentsIterator(mlflow_client)
-    all_exps = list(set(all_exps))
-    all_exp_names = [ exp.name for exp in all_exps ]
-    _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
+    # all_exps = SearchExperimentsIterator(mlflow_client)
+    # all_exps = list(set(all_exps))
+    # all_exp_names = [ exp.name for exp in all_exps ]
+    # _logger.info(f"TOTAL all_exp_names IS {len(all_exp_names)}")
 
-    all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
-    all_model_exp_names = list(set(all_model_exp_names))
-    _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
+    # all_model_exp_names=get_experiments_name_of_models(mlflow_client,model_names = "all")
+    # all_model_exp_names = list(set(all_model_exp_names))
+    # _logger.info(f"Total all_model_exp_names is {len(all_model_exp_names)}")
 
-    remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
-    _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
+    # remaining_exp_names = list(set(all_exp_names) - set(all_model_exp_names))
+    # _logger.info(f"Total remaining_exp_names is {len(remaining_exp_names)}")
 
 
-    remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
-    _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
+    # remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
+    # _logger.info(f"Total remaining_exp_names_subset is {len(remaining_exp_names_subset)}, task_index={task_index}, num_tasks={num_tasks} ") #birbal added
 
-    exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
+    # exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
 
-    exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)    
+    # exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)    
 
-    res_exps = export_experiments(
-        mlflow_client = mlflow_client,
-        # experiments = remaining_exp_names_subset,
-        experiments = exps_and_runs,    #birbal added
-        output_dir = os.path.join(output_dir,"experiments"),
-        export_permissions = export_permissions,
-        run_start_time = run_start_time,
-        export_deleted_runs = export_deleted_runs,
-        notebook_formats = notebook_formats,
-        use_threads = use_threads,
-        task_index = task_index,     #birbal added
-        checkpoint_dir_experiment = checkpoint_dir_experiment,  #birbal
-        processed_experiments_run_ids = processed_experiments_run_ids   #birbal added
-    )
-    duration = round(time.time() - start_time, 1)
-    info_attr = {
-        "options": {
-            "stages": ALL_STAGES,
-            "export_latest_versions": export_latest_versions,
-            "export_permissions": export_permissions,
-            "notebook_formats": notebook_formats,
-            "use_threads": use_threads,
-            "output_dir": output_dir,
-        },
-        "status": {
-            "duration": duration,
-            "models": res_models,
-            "experiments": res_exps
-        }
-    }
-    io_utils.write_export_file(output_dir, "manifest.json", __file__, {}, info_attr)
-    _logger.info(f"Duration for entire tracking server export: {duration} seconds")
+    # res_exps = export_experiments(
+    #     mlflow_client = mlflow_client,
+    #     # experiments = remaining_exp_names_subset,
+    #     experiments = exps_and_runs,    #birbal added
+    #     output_dir = os.path.join(output_dir,"experiments"),
+    #     export_permissions = export_permissions,
+    #     run_start_time = run_start_time,
+    #     export_deleted_runs = export_deleted_runs,
+    #     notebook_formats = notebook_formats,
+    #     use_threads = use_threads,
+    #     task_index = task_index,     #birbal added
+    #     checkpoint_dir_experiment = checkpoint_dir_experiment,  #birbal
+    #     processed_experiments_run_ids = processed_experiments_run_ids   #birbal added
+    # )
+    # duration = round(time.time() - start_time, 1)
+    # info_attr = {
+    #     "options": {
+    #         "stages": ALL_STAGES,
+    #         "export_latest_versions": export_latest_versions,
+    #         "export_permissions": export_permissions,
+    #         "notebook_formats": notebook_formats,
+    #         "use_threads": use_threads,
+    #         "output_dir": output_dir,
+    #     },
+    #     "status": {
+    #         "duration": duration,
+    #         "models": res_models,
+    #         "experiments": res_exps
+    #     }
+    # }
+    # io_utils.write_export_file(output_dir, "manifest.json", __file__, {}, info_attr)
+    # _logger.info(f"Duration for entire tracking server export: {duration} seconds")
 
 
 @click.command()
