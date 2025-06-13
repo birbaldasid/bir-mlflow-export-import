@@ -39,8 +39,8 @@ def export_experiments(
         use_threads = False,
         mlflow_client = None,
         task_index = None,   #birbal added
-        checkpoint_dir_experiment = None,   #birbal added
-        processed_experiments_run_ids = None #birbal added
+        checkpoint_dir_experiment = None   #birbal added
+        # processed_experiments_run_ids = None #birbal added
     ):
     """
     :param experiments: Can be either:
@@ -99,9 +99,9 @@ def export_experiments(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for exp_id_or_name in experiments:
                 run_ids = experiments_dct.get(exp_id_or_name, [])
-                if processed_experiments_run_ids:
-                    processed_run_ids = processed_experiments_run_ids.get(exp_id_or_name, []) #birbal added
-                    run_ids = list(set(run_ids) - set(processed_run_ids))  #birbal added
+                # if processed_experiments_run_ids:   ##birbal added. But need to remove this IF block. This will never be true coz processed_experiments_run_ids and experiments will never have a common exp_ids
+                #     processed_run_ids = processed_experiments_run_ids.get(exp_id_or_name, []) #birbal added
+                #     run_ids = list(set(run_ids) - set(processed_run_ids))  #birbal added
                 future = executor.submit(_export_experiment,
                     mlflow_client,
                     exp_id_or_name,

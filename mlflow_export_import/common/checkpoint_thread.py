@@ -26,10 +26,10 @@ class CheckpointThread(threading.Thread):   #birbal added
     # def run(self):
     #     while not self._stop_event.is_set() or not self.queue.empty():
     #         try:
-    #             item = self.queue.get(timeout=5)
+    #             item = self.queue.get(timeout=1)
     #             self._buffer.append(item)
     #         except Exception as e:
-    #             _logger.warning(f"[Checkpoint] Failed to fetch item from queue: {e}", exc_info=True)
+    #             # _logger.warning(f"[Checkpoint] Failed to fetch item from queue: {e}", exc_info=True)
     #             pass  # No item fetched
 
     #         time_since_last_flush = time.time() - self._last_flush_time
@@ -109,19 +109,21 @@ class CheckpointThread(threading.Thread):   #birbal added
         try:
             dataset = ds.dataset(checkpoint_dir, format="parquet")
             df = dataset.to_table().to_pandas()
-            result_dict = {}
+            result_list = []
 
             if df.empty:
                 _logger.warning(f"[Checkpoint] Parquet data is empty in {checkpoint_dir}")
                 return {}
 
             if object_type == "experiments":
-                result_dict = df.groupby("experiment_id")["run_id"].apply(lambda x: list(set(x))).to_dict()                              
+                # result_dict = df.groupby("experiment_id")["run_id"].apply(lambda x: list(set(x))).to_dict()
+                result_list = df["experiment_id"].dropna().unique().tolist()
 
             if object_type == "models":
-                result_dict = df.groupby("model")["version"].apply(lambda x: list(set(x))).to_dict()   
+                # result_dict = df.groupby("model")["version"].apply(lambda x: list(set(x))).to_dict()  
+                result_list = df["model"].dropna().unique().tolist()
                 
-            return result_dict
+            return result_list
 
         except Exception as e:
             _logger.warning(f"[Checkpoint] Failed to load checkpoint data from {checkpoint_dir}: {e}", exc_info=True)
@@ -131,12 +133,14 @@ def filter_unprocessed_objects(checkpoint_dir,object_type,to_be_processed_object
         processed_objects = CheckpointThread.load_processed_objects(checkpoint_dir,object_type)
         if isinstance(to_be_processed_objects, dict):   
             unprocessed_objects = {k: v for k, v in to_be_processed_objects.items() if k not in processed_objects}
-            return unprocessed_objects, processed_objects
+            # return unprocessed_objects, processed_objects
+            return unprocessed_objects
         
         if isinstance(to_be_processed_objects, list):   
-            unprocessed_objects = list(set(to_be_processed_objects) - set(processed_objects.keys()))
-            return unprocessed_objects, processed_objects
+            unprocessed_objects = list(set(to_be_processed_objects) - set(processed_objects))
+            # return unprocessed_objects, processed_objects
+            return unprocessed_objects
         
-        return None,None
+        return None
               
              

@@ -48,8 +48,8 @@ def export_model(
         export_deleted_runs = False,
         notebook_formats = None,
         mlflow_client = None,
-        result_queue = None,    #birbal added
-        processed_models_versions = None #birbal added
+        result_queue = None    #birbal added
+        # processed_models_versions = None #birbal added
     ):
     """
     :param model_name: Registered model name.
@@ -76,7 +76,8 @@ def export_model(
     opts = Options(stages, versions, export_latest_versions, export_deleted_runs, export_version_model, export_permissions, notebook_formats)
 
     try:
-        _export_model(mlflow_client, model_name, output_dir, opts, result_queue, processed_models_versions) #birbal added result_queue
+        # _export_model(mlflow_client, model_name, output_dir, opts, result_queue, processed_models_versions) #birbal added result_queue
+        _export_model(mlflow_client, model_name, output_dir, opts, result_queue) #birbal added result_queue
         return True, model_name
     except RestException as e:
         # err_msg = { "model": model_name, "RestException": e.json  }       #birbal commented out
@@ -100,13 +101,15 @@ def export_model(
         return False, model_name
 
 
-def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None, processed_models_versions = None):    #birbal added result_queue
+# def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None, processed_models_versions = None):    #birbal added result_queue
+def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None):    #birbal added result_queue
     ori_versions = model_utils.list_model_versions(mlflow_client, model_name, opts.export_latest_versions)
-    processed_versions = []
-    if processed_models_versions:
-        processed_versions = processed_models_versions.get(model_name, [])    #birbal added
-    if processed_versions:
-        ori_versions = [v for v in ori_versions if v.version not in processed_versions]     #birbal added
+    # processed_versions = []
+    # if processed_models_versions:
+    #     processed_versions = processed_models_versions.get(model_name, [])    #birbal added. THIS WILL NEVER FIND A MATCH. REMOVE THIS 
+    # if processed_versions:
+    #     _logger.info(f"REMOVE THIS BLOCK. THIS WILL NEVER BE TRUE")
+    #     ori_versions = [v for v in ori_versions if v.version not in processed_versions]     #birbal added
     _logger.info(f"TOTAL MODELS VERSIONS TO EXPORT: {len(ori_versions)}") #birbal added
 
     msg = "latest" if opts.export_latest_versions else "all"
@@ -125,6 +128,8 @@ def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = No
         "export_latest_versions": opts.export_latest_versions,
         "export_permissions": opts.export_permissions
     }
+    
+    model = model.pop('deployment_job_state', None)  ##birbal. Had to pop else it will throw this exception "Object of type ModelVersionDeploymentJobState is not JSONserializable"
     _model = { "registered_model": model }
     io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
     _logger.info(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}'")

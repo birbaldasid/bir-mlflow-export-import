@@ -71,7 +71,8 @@ def export_models(
     out_dir = os.path.join(output_dir, "experiments")
 
     ####Birbal block
-    exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
+    # exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
+    exps_and_runs = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
 
     ######
 
@@ -85,8 +86,8 @@ def export_models(
         notebook_formats = notebook_formats,
         use_threads = use_threads,
         task_index = task_index,     #birbal added
-        checkpoint_dir_experiment = checkpoint_dir_experiment,   #birbal added
-        processed_experiments_run_ids = processed_experiments_run_ids
+        checkpoint_dir_experiment = checkpoint_dir_experiment   #birbal added
+        # processed_experiments_run_ids = processed_experiments_run_ids
     )
     res_models = _export_models(
         mlflow_client,
@@ -150,7 +151,8 @@ def _export_models(
     futures = []
 
     ######## birbal new block
-    model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
+    # model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
+    model_names = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
     result_queue = Queue()
     checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=100)
     _logger.info(f"checkpoint_thread started for models")
@@ -171,8 +173,8 @@ def _export_models(
                     export_deleted_runs = export_deleted_runs,
                     notebook_formats = notebook_formats,
                     mlflow_client = mlflow_client,
-                    result_queue = result_queue,    #birbal added
-                    processed_models_versions = processed_models_versions #birbal added
+                    result_queue = result_queue    #birbal added
+                    # processed_models_versions = processed_models_versions #birbal added
                 )
                 futures.append(future)
         ok_models = [] ; failed_models = []
