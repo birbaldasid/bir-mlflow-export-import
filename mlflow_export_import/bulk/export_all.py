@@ -91,12 +91,12 @@ def export_all(
 
 
     remaining_exp_names_subset = bulk_utils.get_subset_list(remaining_exp_names, task_index, num_tasks) #birbal added
-    _logger.info(f"TOTAL WORKSPACE EXPERIMENT COUNT WITH NO MODEL PROCESSED BY TASK_INDEX={task_index}:   {len(remaining_exp_names_subset)}") #birbal added
+    _logger.info(f"TOTAL WORKSPACE EXPERIMENT COUNT WITH NO MODEL FOR TASK_INDEX={task_index}:   {len(remaining_exp_names_subset)}") #birbal added
 
     exps_and_runs = get_experiment_runs_dict_from_names(mlflow_client, remaining_exp_names_subset) #birbal added
 
     exps_and_runs = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)    
-    _logger.info(f"AFTER FILTERING OUT THE PROCESSED EXPERIMENTS, TOTAL REMAINING COUNT: {len(exps_and_runs)}")
+    _logger.info(f"AFTER FILTERING OUT THE PROCESSED EXPERIMENTS FROM CHECKPOINT, TOTAL REMAINING COUNT: {len(exps_and_runs)}")
 
     res_exps = export_experiments(
         mlflow_client = mlflow_client,

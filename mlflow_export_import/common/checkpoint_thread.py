@@ -79,7 +79,7 @@ class CheckpointThread(threading.Thread):   #birbal added
 
     def stop(self):        
         self._stop_event.set()
-        _logger.info("STOP event called..........")
+        _logger.info("STOP event called.")
 
     @staticmethod
     def load_processed_objects(checkpoint_dir, object_type= None):

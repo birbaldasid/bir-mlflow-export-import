@@ -62,18 +62,22 @@ def export_models(
 
     mlflow_client = mlflow_client or create_mlflow_client()
     exps_and_runs = get_experiments_runs_of_models(mlflow_client, model_names, task_index, num_tasks) ##birbal return dict of key=exp_id and value=list[run_id]
-    _logger.info(f"len(exps_and_runs): {len(exps_and_runs)}")
 
     total_run_ids = sum(len(run_id_list) for run_id_list in exps_and_runs.values()) #birbal added
-    _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT = {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT = {total_run_ids}") #birbal added
+    _logger.info(f"TOTAL MODEL EXPERIMENTS TO EXPORT FOR TASK_INDEX={task_index}:  {len(exps_and_runs)} AND TOTAL RUN_IDs TO EXPORT: {total_run_ids}") #birbal added
     
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
 
     ######Birbal block
     exps_and_runs = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
-    _logger.info(f"TOTAL UNPROCESSED EXPERIMENT COUNT = {len(exps_and_runs)} ")  #birbal added
+    _logger.info(f"AFTER FILTERING OUT THE PROCESSED EXPERIMENTS FROM CHECKPOINT, REMAINING EXPERIMENTS COUNT TO BE PROCESSED: {len(exps_and_runs)} ")  #birbal added
     ######
+
+    if len(exps_and_runs) == 0:
+        _logger.info("NO MODEL EXPERIMENTS TO EXPORT")
+        return
+
 
     res_exps = export_experiments.export_experiments(
         mlflow_client = mlflow_client,

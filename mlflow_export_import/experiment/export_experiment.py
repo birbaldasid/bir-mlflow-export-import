@@ -68,12 +68,10 @@ def export_experiment(
     failed_run_ids = []
     num_runs_exported = 0
     if run_ids:
-        _logger.info(f"in IFFFFFFFFFFFFFFFFFFFFFFFF ...run_ids is {run_ids} in export_experiment.py")
         runs = _get_runs(mlflow_client, run_ids, exp, failed_run_ids)
         if check_nested_runs: # ZZ
             runs = nested_runs_utils.get_nested_runs(mlflow_client, runs) # 
     else:
-        _logger.info(f"in ELSEEEEEEEEEEEEEEEEEEEE ...run_ids is {run_ids} in export_experiment.py")
         kwargs = {}
         if run_start_time:
             kwargs["filter"] = f"start_time > {run_start_time}"

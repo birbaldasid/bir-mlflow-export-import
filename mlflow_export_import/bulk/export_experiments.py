@@ -54,7 +54,6 @@ def export_experiments(
     mlflow_client = mlflow_client or mlflow.MlflowClient()
     start_time = time.time()
     max_workers = utils.get_threads(use_threads)
-    _logger.info(f"max_workers iss {max_workers}")
     experiments_arg = _convert_dict_keys_to_list(experiments.keys())     #birbal added
 
     if isinstance(experiments,str) and experiments.endswith(".txt"):
@@ -66,7 +65,6 @@ def export_experiments(
     else:
         export_all_runs = not isinstance(experiments, dict)
         experiments = bulk_utils.get_experiment_ids(mlflow_client, experiments)
-        _logger.info(f"Total model experiments to export: {len(experiments)}") #birbal added
 
         if export_all_runs:
             table_data = experiments
@@ -80,6 +78,10 @@ def export_experiments(
             table_data.append(["Total",num_runs])
             columns = ["Experiment ID", "# Runs"]
     utils.show_table("Experiments",table_data,columns)
+
+    if len(experiments) == 0:
+        _logger.info(f"NO EXPERIMENTS TO PROCESS")
+        return
 
     ######## birbal new block
     result_queue = Queue()
