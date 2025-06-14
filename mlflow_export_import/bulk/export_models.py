@@ -70,15 +70,13 @@ def export_models(
     start_time = time.time()
     out_dir = os.path.join(output_dir, "experiments")
 
-    ####Birbal block
-    # exps_and_runs, processed_experiments_run_ids = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
+    ######Birbal block
     exps_and_runs = filter_unprocessed_objects(checkpoint_dir_experiment,"experiments",exps_and_runs)
-
+    _logger.info(f"TOTAL UNPROCESSED EXPERIMENT COUNT = {len(exps_and_runs)} ")  #birbal added
     ######
 
     res_exps = export_experiments.export_experiments(
         mlflow_client = mlflow_client,
-        # experiments = exps_to_export, #birbal commented out
         experiments = exps_and_runs,   #birbal added
         output_dir = out_dir,
         export_permissions = export_permissions,
@@ -87,7 +85,6 @@ def export_models(
         use_threads = use_threads,
         task_index = task_index,     #birbal added
         checkpoint_dir_experiment = checkpoint_dir_experiment   #birbal added
-        # processed_experiments_run_ids = processed_experiments_run_ids
     )
     res_models = _export_models(
         mlflow_client,
@@ -151,7 +148,6 @@ def _export_models(
     futures = []
 
     ######## birbal new block
-    # model_names, processed_models_versions = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
     model_names = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
     result_queue = Queue()
     checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=100)
@@ -174,7 +170,6 @@ def _export_models(
                     notebook_formats = notebook_formats,
                     mlflow_client = mlflow_client,
                     result_queue = result_queue    #birbal added
-                    # processed_models_versions = processed_models_versions #birbal added
                 )
                 futures.append(future)
         ok_models = [] ; failed_models = []

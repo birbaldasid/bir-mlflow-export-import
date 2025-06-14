@@ -21,18 +21,6 @@ run_start_date = dbutils.widgets.get("4. Run start date")
 dbutils.widgets.dropdown("5. Export permissions","no",["yes","no"])
 export_permissions = dbutils.widgets.get("5. Export permissions") == "yes"
 
-dbutils.widgets.dropdown("6. Export deleted runs","no",["yes","no"])
-export_deleted_runs = dbutils.widgets.get("6. Export deleted runs") == "yes"
-
-dbutils.widgets.dropdown("7. Export version MLflow model","no",["yes","no"]) # TODO
-export_version_model = dbutils.widgets.get("7. Export version MLflow model") == "yes"
-
-dbutils.widgets.multiselect("8. Notebook formats", "SOURCE", [ "SOURCE", "DBC", "HTML", "JUPYTER" ])
-notebook_formats = dbutils.widgets.get("8. Notebook formats")
-
-dbutils.widgets.dropdown("9. Use threads","no",["yes","no"])
-use_threads = dbutils.widgets.get("9. Use threads") == "yes"
-
 dbutils.widgets.text("11. num_tasks", "") 
 num_tasks = dbutils.widgets.get("11. num_tasks")
  
@@ -41,10 +29,6 @@ print("stages:", stages)
 print("export_latest_versions:", export_latest_versions)
 print("run_start_date:", run_start_date)
 print("export_permissions:", export_permissions)
-print("export_deleted_runs:", export_deleted_runs)
-print("export_version_model:", export_version_model)
-print("notebook_formats:", notebook_formats)
-print("use_threads:", use_threads)
 print("num_tasks:", num_tasks)
 
 # COMMAND ----------
@@ -55,8 +39,6 @@ DATABRICKS_TOKEN = dbutils.notebook.entry_point.getDbutils().notebook().getConte
 
 driver_node_type = "Standard_D4ds_v5"
 worker_node_type = "Standard_D4ds_v5"
-
-# def create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks):
 
 def create_multi_task_job_json():
     tasks = []
@@ -73,20 +55,15 @@ def create_multi_task_job_json():
                 "runtime_engine": "STANDARD"
             },
             "notebook_task": {
-                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/mlflow_reimport/bir-mlflow-export-import/databricks_notebooks/bulk/Export_All",
+                "notebook_path": "/Workspace/Users/birbal.das@databricks.com/mlflow-reimport/bir-mlflow-export-import/databricks_notebooks/bulk/Export_All",
                 "base_parameters": {
                     "output_dir": output_dir,
                     "stages": stages,
                     "export_latest_versions": export_latest_versions,
                     "run_start_date": run_start_date,
                     "export_permissions": export_permissions,
-                    "export_deleted_runs": export_deleted_runs,
-                    "export_version_model": export_version_model,
-                    "notebook_formats": notebook_formats,
-                    "use_threads": use_threads,
                     "task_index": i,
                     "num_tasks": num_tasks,
-                    # "run_timestamp": "{{job.start_time.iso_date}}-Export-jobid-{{job.id}}-jobrunid-{{job.run_id}}",
                     "run_timestamp": "{{job.start_time.iso_date}}-Export-jobid-{{job.id}}",
                     "jobrunid": "jobrunid-{{job.run_id}}"
                 }
@@ -103,7 +80,6 @@ def create_multi_task_job_json():
     return job_json
 
 def submit_databricks_job():
-    # job_payload = create_multi_task_job_json(output_dir,stages,export_latest_versions,run_start_date,export_permissions,export_deleted_runs,export_version_model,notebook_formats,use_threads,num_tasks)
     job_payload = create_multi_task_job_json()
 
     headers = {

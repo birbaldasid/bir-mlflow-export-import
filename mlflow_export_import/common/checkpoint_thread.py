@@ -23,26 +23,6 @@ class CheckpointThread(threading.Thread):   #birbal added
         self._buffer = []
         self._last_flush_time = time.time()
 
-    # def run(self):
-    #     while not self._stop_event.is_set() or not self.queue.empty():
-    #         try:
-    #             item = self.queue.get(timeout=1)
-    #             self._buffer.append(item)
-    #         except Exception as e:
-    #             # _logger.warning(f"[Checkpoint] Failed to fetch item from queue: {e}", exc_info=True)
-    #             pass  # No item fetched
-
-    #         time_since_last_flush = time.time() - self._last_flush_time
-    #         if len(self._buffer) >= self.batch_size or time_since_last_flush >= self.interval:
-    #             self.flush_to_delta()
-    #             self._buffer.clear()
-    #             self._last_flush_time = time.time()
-
-    #     # Final flush
-    #     if self._buffer:
-    #         self.flush_to_delta()
-    #         self._buffer.clear()
-
 
     def run(self):
         max_drain_batch = 50  # Max items to pull per loop iteration
@@ -51,15 +31,13 @@ class CheckpointThread(threading.Thread):   #birbal added
             drain_count = 0
 
             try:
-                # while drain_count < max_drain_batch:
                 while not self.queue.empty():
-                    _logger.debug(f"drain_count isssssssssss {drain_count} and buffer len is {len(self._buffer)}")
-                    # item = self.queue.get_nowait()
+                    _logger.debug(f"drain_count is {drain_count} and buffer len is {len(self._buffer)}")
                     item = self.queue.get()
                     self._buffer.append(item)
                     drain_count += 1
                     if drain_count > max_drain_batch:   
-                        _logger.info(f" drain_count > max_drain_batch is TRUEEEEEEE")                     
+                        _logger.info(f" drain_count > max_drain_batch is TRUE")                     
                         items_fetched = True
                         break
                     
@@ -70,7 +48,6 @@ class CheckpointThread(threading.Thread):   #birbal added
                 _logger.info(f"[Checkpoint] Fetched {drain_count} items from queue.")
 
             time_since_last_flush = time.time() - self._last_flush_time
-            # _logger.debug(f"time_since_last_flush issss {time_since_last_flush}")
             if len(self._buffer) >= self.batch_size or time_since_last_flush >= self.interval:
                 _logger.info(f"ready to flush to delta")
                 self.flush_to_delta()
@@ -85,7 +62,7 @@ class CheckpointThread(threading.Thread):   #birbal added
 
 
     def flush_to_delta(self):
-        _logger.info(f"flush_to_delta calledddddd")
+        _logger.info(f"flush_to_delta called")
         try:
             df = pd.DataFrame(self._buffer)
             if df.empty:
@@ -95,7 +72,7 @@ class CheckpointThread(threading.Thread):   #birbal added
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             file_path = os.path.join(self.checkpoint_dir, f"checkpoint_{timestamp}.parquet")
             df.to_parquet(file_path, index=False)
-            _logger.info(f"[Checkpoint] Saved len(df) {len(df)} records to {file_path}...len(self._buffer) is {len(self._buffer)}...data in buffer is {self._buffer}.... data in dataframe is {df}")
+            _logger.info(f"[Checkpoint] Saved len(df) {len(df)} records to {file_path}")
             
         except Exception as e:
             _logger.error(f"[Checkpoint] Failed to write to {self.checkpoint_dir}: {e}", exc_info=True)
@@ -116,11 +93,9 @@ class CheckpointThread(threading.Thread):   #birbal added
                 return {}
 
             if object_type == "experiments":
-                # result_dict = df.groupby("experiment_id")["run_id"].apply(lambda x: list(set(x))).to_dict()
                 result_list = df["experiment_id"].dropna().unique().tolist()
 
             if object_type == "models":
-                # result_dict = df.groupby("model")["version"].apply(lambda x: list(set(x))).to_dict()  
                 result_list = df["model"].dropna().unique().tolist()
                 
             return result_list
@@ -133,12 +108,10 @@ def filter_unprocessed_objects(checkpoint_dir,object_type,to_be_processed_object
         processed_objects = CheckpointThread.load_processed_objects(checkpoint_dir,object_type)
         if isinstance(to_be_processed_objects, dict):   
             unprocessed_objects = {k: v for k, v in to_be_processed_objects.items() if k not in processed_objects}
-            # return unprocessed_objects, processed_objects
             return unprocessed_objects
         
         if isinstance(to_be_processed_objects, list):   
             unprocessed_objects = list(set(to_be_processed_objects) - set(processed_objects))
-            # return unprocessed_objects, processed_objects
             return unprocessed_objects
         
         return None

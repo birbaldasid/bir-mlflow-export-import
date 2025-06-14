@@ -40,7 +40,6 @@ def export_experiments(
         mlflow_client = None,
         task_index = None,   #birbal added
         checkpoint_dir_experiment = None   #birbal added
-        # processed_experiments_run_ids = None #birbal added
     ):
     """
     :param experiments: Can be either:
@@ -56,7 +55,6 @@ def export_experiments(
     start_time = time.time()
     max_workers = utils.get_threads(use_threads)
     _logger.info(f"max_workers iss {max_workers}")
-    # experiments_arg = _convert_dict_keys_to_list(experiments)     #birbal commentec out
     experiments_arg = _convert_dict_keys_to_list(experiments.keys())     #birbal added
 
     if isinstance(experiments,str) and experiments.endswith(".txt"):
@@ -99,9 +97,6 @@ def export_experiments(
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             for exp_id_or_name in experiments:
                 run_ids = experiments_dct.get(exp_id_or_name, [])
-                # if processed_experiments_run_ids:   ##birbal added. But need to remove this IF block. This will never be true coz processed_experiments_run_ids and experiments will never have a common exp_ids
-                #     processed_run_ids = processed_experiments_run_ids.get(exp_id_or_name, []) #birbal added
-                #     run_ids = list(set(run_ids) - set(processed_run_ids))  #birbal added
                 future = executor.submit(_export_experiment,
                     mlflow_client,
                     exp_id_or_name,
@@ -183,6 +178,10 @@ def _export_experiment(mlflow_client, exp_id_or_name, output_dir, export_permiss
     ok_runs = -1; failed_runs = -1
     exp_name = exp_id_or_name
     try:
+        if not run_ids:
+            _logger.error(f"no runs to export for experiment {exp_id_or_name}. Throwing exception to capture in checkpoint file")
+            raise Exception(f"no runs to export for experiment {exp_id_or_name}")
+
         exp = mlflow_utils.get_experiment(mlflow_client, exp_id_or_name)
         exp_name = exp.name
         exp_output_dir = os.path.join(output_dir, exp.experiment_id)
@@ -211,28 +210,23 @@ def _export_experiment(mlflow_client, exp_id_or_name, output_dir, export_permiss
 
     except RestException as e:
         mlflow_utils.dump_exception(e)
-        # err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(e) }    #birbal commented out
-        err_msg = { **{ "message": "Cannot export experiment", "experiment": exp_name }, ** mlflow_utils.mk_msg_RestException(str(e)) } #birbal type casted
+        err_msg = { **{ "message": "Cannot export experiment", "experiment_id": exp_id_or_name }, ** mlflow_utils.mk_msg_RestException(str(e)) } #birbal type casted
         _logger.error(err_msg)
         err_msg["status"] = "failed"    #birbal added
         result_queue.put(err_msg)   #birbal added
     except MlflowExportImportException as e:
-        # err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": e.kwargs }  #birbal commented out
-        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "MlflowExportImportException": str(e.kwargs) }    #birbal string casted
+        err_msg = { "message": "Cannot export experiment", "experiment_id": exp_id_or_name, "MlflowExportImportException": str(e.kwargs) }    #birbal string casted
         _logger.error(err_msg)
 
         err_msg["status"] = "failed"    #birbal added
         result_queue.put(err_msg)   #birbal added
     except Exception as e:
-        # err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": e }    #birbal commented out
-        err_msg = { "message": "Cannot export experiment", "experiment": exp_name, "Exception": str(e) }    #birbal string casted
+        err_msg = { "message": "Cannot export experiment", "experiment_id": exp_id_or_name, "Exception": str(e) }    #birbal string casted
         _logger.error(err_msg)
         
         err_msg["status"] = "failed"    #birbal added
         result_queue.put(err_msg)   #birbal added
 
-
-    # TODO: Finally block to persist experiments ::: Birbal////////     
     return Result(exp_name, ok_runs, failed_runs)
 
 

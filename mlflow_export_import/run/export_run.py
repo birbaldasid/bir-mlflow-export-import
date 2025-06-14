@@ -65,7 +65,6 @@ def export_run(
             return None
         experiment_id = run.info.experiment_id
         experiment = mlflow_client.get_experiment(experiment_id)
-        # msg = { "run_id": run.info.run_id, "lifecycle_stage": run.info.lifecycle_stage, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name}
         msg = { "run_id": run.info.run_id, "experiment_id": run.info.experiment_id, "experiment_name": experiment.name} #birbal removed lifecycle_stage
         tags = run.data.tags
         tags = dict(sorted(tags.items()))

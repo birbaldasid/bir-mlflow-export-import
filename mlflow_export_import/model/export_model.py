@@ -49,7 +49,6 @@ def export_model(
         notebook_formats = None,
         mlflow_client = None,
         result_queue = None    #birbal added
-        # processed_models_versions = None #birbal added
     ):
     """
     :param model_name: Registered model name.
@@ -76,11 +75,9 @@ def export_model(
     opts = Options(stages, versions, export_latest_versions, export_deleted_runs, export_version_model, export_permissions, notebook_formats)
 
     try:
-        # _export_model(mlflow_client, model_name, output_dir, opts, result_queue, processed_models_versions) #birbal added result_queue
         _export_model(mlflow_client, model_name, output_dir, opts, result_queue) #birbal added result_queue
         return True, model_name
     except RestException as e:
-        # err_msg = { "model": model_name, "RestException": e.json  }       #birbal commented out
         err_msg = { "model": model_name, "RestException": str(e.json)  }    #birbal string casted
         if e.json.get("error_code") == "RESOURCE_DOES_NOT_EXIST":
             _logger.error({ **{"message": "Model does not exist"}, **err_msg})
@@ -92,8 +89,7 @@ def export_model(
         result_queue.put(err_msg)  #birbal added
         return False, model_name
     except Exception as e:
-        _logger.error({ "model": model_name, "Exception": e })
-        # err_msg = { "model": model_name, "status": "failed","Exception": e  }     #birbal commented out added    
+        _logger.error({ "model": model_name, "Exception": e })   
         err_msg = { "model": model_name, "status": "failed","Exception": str(e)  }   #birbal string casted        
         result_queue.put(err_msg)  #birbal added
         import traceback
@@ -101,15 +97,8 @@ def export_model(
         return False, model_name
 
 
-# def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None, processed_models_versions = None):    #birbal added result_queue
 def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = None):    #birbal added result_queue
     ori_versions = model_utils.list_model_versions(mlflow_client, model_name, opts.export_latest_versions)
-    # processed_versions = []
-    # if processed_models_versions:
-    #     processed_versions = processed_models_versions.get(model_name, [])    #birbal added. THIS WILL NEVER FIND A MATCH. REMOVE THIS 
-    # if processed_versions:
-    #     _logger.info(f"REMOVE THIS BLOCK. THIS WILL NEVER BE TRUE")
-    #     ori_versions = [v for v in ori_versions if v.version not in processed_versions]     #birbal added
     _logger.info(f"TOTAL MODELS VERSIONS TO EXPORT: {len(ori_versions)}") #birbal added
 
     msg = "latest" if opts.export_latest_versions else "all"
@@ -128,11 +117,14 @@ def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = No
         "export_latest_versions": opts.export_latest_versions,
         "export_permissions": opts.export_permissions
     }
-    
-    model = model.pop('deployment_job_state', None)  ##birbal. Had to pop else it will throw this exception "Object of type ModelVersionDeploymentJobState is not JSONserializable"
-    _model = { "registered_model": model }
-    io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
-    _logger.info(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}'")
+    try:    #birbal added
+        _model = { "registered_model": model }
+        io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
+        _logger.info(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}'")
+    except Exception as e:  #birbal added below block
+        _model = { "registered_model": str(model) }  #birbal type casted to string else it will throw "Object of type ModelVersionDeploymentJobState is not JSON serializable
+        io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
+        _logger.error(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}' BUT there was exception. Error: {str(e)}")
 
 
 def _export_versions(mlflow_client, model_dct, versions, output_dir, opts, result_queue = None):    #birbal added result_queue
@@ -180,7 +172,6 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
             output_versions.append(vr_dct)
 
     except RestException as e:
-        # err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": e.json  }  #birbal commented out
         err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "RestException": str(e.json)  }    #birbal string casted
         if e.json.get("error_code") == "RESOURCE_DOES_NOT_EXIST":
             err_msg = { **{"message": "Version run probably does not exist"}, **err_msg}
@@ -198,7 +189,6 @@ def _export_version(mlflow_client, vr, output_dir, aliases, output_versions, fai
         result_queue.put(err_msg)   #birbal added
     
     except Exception as e:   
-        # err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": e  }  #birbal commented out
         err_msg = { "model": vr.name, "version": vr.version, "run_id": vr.run_id, "status":"failed", "Exception": str(e)  }  #birbal string casted
         result_queue.put(err_msg)   #birbal added
         

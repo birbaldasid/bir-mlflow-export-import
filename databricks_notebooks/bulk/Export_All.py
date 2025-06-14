@@ -26,31 +26,33 @@ import os
 
 # COMMAND ----------
 
+
+output_dir = dbutils.widgets.get("output_dir")
 output_dir = dbutils.widgets.get("output_dir")
 output_dir = output_dir.replace("dbfs:","/dbfs")
 
+dbutils.widgets.multiselect("stages", "Production", ["Production","Staging","Archived","None"])
 stages = dbutils.widgets.get("stages")
 
+dbutils.widgets.dropdown("export_latest_versions","false",["true","false"])
 export_latest_versions = dbutils.widgets.get("export_latest_versions") == "true"
 
+dbutils.widgets.text("run_start_date", "") 
 run_start_date = dbutils.widgets.get("run_start_date")
 
+dbutils.widgets.dropdown("export_permissions","false",["true","false"])
 export_permissions = dbutils.widgets.get("export_permissions") == "true"
 
-export_deleted_runs = dbutils.widgets.get("export_deleted_runs") == "true"
-
-export_version_model = dbutils.widgets.get("export_version_model") == "true"
-
-notebook_formats = dbutils.widgets.get("notebook_formats").split(",")
-
-use_threads = dbutils.widgets.get("use_threads") == "true"
-
+dbutils.widgets.text("task_index", "")
 task_index = int(dbutils.widgets.get("task_index"))
 
+dbutils.widgets.text("num_tasks", "")
 num_tasks = int(dbutils.widgets.get("num_tasks"))
 
+dbutils.widgets.text("run_timestamp", "")
 run_timestamp = dbutils.widgets.get("run_timestamp")
 
+dbutils.widgets.text("jobrunid", "")
 jobrunid = dbutils.widgets.get("jobrunid")
  
 if run_start_date=="": run_start_date = None
@@ -60,10 +62,6 @@ print("stages:", stages)
 print("export_latest_versions:", export_latest_versions)
 print("run_start_date:", run_start_date)
 print("export_permissions:", export_permissions)
-print("export_deleted_runs:", export_deleted_runs)
-print("export_version_model:", export_version_model)
-print("notebook_formats:", notebook_formats)
-print("use_threads:", use_threads)
 print("task_index:", task_index)
 print("num_tasks:", num_tasks)
 print("run_timestamp:", run_timestamp)
@@ -106,10 +104,6 @@ config.export_or_import="export"
 
 # COMMAND ----------
 
-
-
-# COMMAND ----------
-
 from mlflow_export_import.bulk.export_all import export_all
 
 export_all(
@@ -118,10 +112,10 @@ export_all(
     export_latest_versions = export_latest_versions,
     run_start_time = run_start_date,
     export_permissions = export_permissions,
-    export_deleted_runs = export_deleted_runs,
-    export_version_model = export_version_model,
-    notebook_formats = notebook_formats, 
-    use_threads = use_threads,
+    export_deleted_runs = False,
+    export_version_model = False,
+    notebook_formats = ['SOURCE'], 
+    use_threads = True,
     task_index = task_index,
     num_tasks = num_tasks,
     checkpoint_dir_experiment = checkpoint_dir_experiment,
