@@ -74,9 +74,9 @@ def export_models(
     _logger.info(f"AFTER FILTERING OUT THE PROCESSED EXPERIMENTS FROM CHECKPOINT, REMAINING EXPERIMENTS COUNT TO BE PROCESSED: {len(exps_and_runs)} ")  #birbal added
     ######
 
-    if len(exps_and_runs) == 0:
-        _logger.info("NO MODEL EXPERIMENTS TO EXPORT")
-        return
+    # if len(exps_and_runs) == 0:
+    #     _logger.info("NO MODEL EXPERIMENTS TO EXPORT")
+    #     return
 
 
     res_exps = export_experiments.export_experiments(
@@ -153,6 +153,7 @@ def _export_models(
 
     ######## birbal new block
     model_names = filter_unprocessed_objects(checkpoint_dir_model,"models",model_names)
+    _logger.info(f"AFTER FILTERING OUT THE PROCESSED MODELS FROM CHECKPOINT, TOTAL REMAINING COUNT: {len(model_names)}")
     result_queue = Queue()
     checkpoint_thread = CheckpointThread(result_queue, checkpoint_dir_model, interval=300, batch_size=100)
     _logger.info(f"checkpoint_thread started for models")

@@ -23,6 +23,7 @@ from mlflow_export_import.common import utils, io_utils, model_utils
 from mlflow_export_import.common.timestamp_utils import adjust_timestamps
 from mlflow_export_import.common import MlflowExportImportException
 from mlflow_export_import.run.export_run import export_run
+import ast #birbal added
 
 _logger = utils.getLogger(__name__)
 
@@ -121,10 +122,14 @@ def _export_model(mlflow_client, model_name, output_dir, opts, result_queue = No
         _model = { "registered_model": model }
         io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
         _logger.info(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}'")
-    except Exception as e:  #birbal added below block
-        _model = { "registered_model": str(model) }  #birbal type casted to string else it will throw "Object of type ModelVersionDeploymentJobState is not JSON serializable
+    except Exception as e:
+        ##birbal added this block to resolve ""Object of type ModelVersionDeploymentJobState is not JSON" error
+        model = str(model).replace("<", "\"").replace(">", "\"")
+        model = ast.literal_eval(model)
+        #birbal below end
+        _model = { "registered_model": model } 
         io_utils.write_export_file(output_dir, "model.json", __file__, _model, info_attr)
-        _logger.error(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}' BUT there was exception. Error: {str(e)}")
+        _logger.warning(f"Exported {len(versions)}/{len(ori_versions)} '{msg}' versions for model '{model_name}' AFTER applying the FIX(replaced < and > with double quote). Else it will throw this exception due to the presence of < and > in the dict value of key deployment_job_state. Exception : {str(e)} which will cause issues during MODEL IMPORT")
 
 
 def _export_versions(mlflow_client, model_dct, versions, output_dir, opts, result_queue = None):    #birbal added result_queue
