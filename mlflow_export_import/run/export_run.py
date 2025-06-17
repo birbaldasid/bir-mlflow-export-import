@@ -110,7 +110,8 @@ def export_run(
             msg["model"] = vr.name  #birbal added
             msg["version"] = vr.version #birbal added
             msg["stage"] = vr.current_stage #birbal added
-        result_queue.put(msg) #birbal added
+        if result_queue:
+            result_queue.put(msg) #birbal added
         return run
 
     except RestException as e:
@@ -125,7 +126,8 @@ def export_run(
             err_msg["version"] = vr.version #birbal added
             err_msg["stage"] = vr.current_stage #birbal added
         _logger.error(f"Run export failed (1): {err_msg}")
-        result_queue.put(err_msg) #birbal added
+        if result_queue:
+            result_queue.put(err_msg) #birbal added
 
         return None
     except Exception as e:
@@ -140,7 +142,8 @@ def export_run(
             err_msg["version"] = vr.version #birbal added
             err_msg["stage"] = vr.current_stage #birbal added
         _logger.error(f"Run export failed (2): {err_msg}")        
-        result_queue.put(err_msg) #birbal added
+        if result_queue:
+            result_queue.put(err_msg) #birbal added
 
         traceback.print_exc()
         return None
